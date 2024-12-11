@@ -1,4 +1,5 @@
 *.c
-CMakeList.txt
+CMakeLists.txt
 cmake-build-debug
 cases
+.idea

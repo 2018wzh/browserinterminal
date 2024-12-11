@@ -19,6 +19,7 @@ todo list:
     - 渲染分辨率从 40 * 80 换成了 10 * 50，在 clion 终端中观感正常
     - 输入 html 长度上限从 $10^5$ 换成了 $10^4$
     - 添加了部分样例
+    - 改了一些样例的小错误
 
 ---
 
@@ -188,13 +189,13 @@ Man, what can I say
 示例：
 
 ```html
-<img src="↖↑↗←o→↙↓↘" width="3"></img>
+<img src="$@$@o@$@$" width="3"></img>
 ```
 
 ```
-↖↑↗
-←o→
-↙↓↘
+$@$
+@o@
+$@$
 ```
 
 ##### 容器(DIVision)
@@ -217,7 +218,7 @@ Man, what can I say
 <div 
      w="10" 
      h="5" 
-     direction="column" 
+     direction="row" 
      align-items="center" 
      justify-content="end"
      i u
@@ -438,7 +439,7 @@ HTML 源码是嵌套风格的语言。说到嵌套风格，你有没有想起来
 ### 样例一
 
 ```html
-<p>HELL</p>
+<p>HELLO</p>
 ```
 
 ![case1.drawio](images/case1.drawio-17338990564041.svg)
