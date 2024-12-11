@@ -8,8 +8,17 @@ todo list:
 
 - 部分例子无法渲染出下划线，需要修改成图片
 - 写标程
-- 完善实现提示
+- 完善实现提示（不要完全按照现在的提示写，有问题）
 - 造样例与测试数据
+- 计划于12月17号前将以上 todo 解决
+
+更新记录:
+
+- `2024-12-11`
+    - p 和 h 元素的 color 属性中删除了 `white`，因为字太白在白色背景终端不便查看
+    - 渲染分辨率从 40 * 80 换成了 10 * 50，在 clion 终端中观感正常
+    - 输入 html 长度上限从 $10^5$ 换成了 $10^4$
+    - 添加了部分样例
 
 ---
 
@@ -116,7 +125,7 @@ Man, what can I say
 
 ### 如何渲染
 
-在解析了 HTML 之后，你需要将其中的元素按规则渲染到一个宽为 80，高为 40 的字符命令行界面上。为了简化，你只需要渲染到一个 char\[40]\[80] 的二维字符数组中，并打印出来即可。
+在解析了 HTML 之后，你需要将其中的元素按规则渲染到一个宽为 50，高为 10 的字符命令行界面上。为了简化，你只需要渲染到一个 char\[10]\[50] 的二维字符数组中，并打印出来即可。
 
 每一种元素有其独特的渲染方式，并且会根据属性来进行一些调整。
 
@@ -136,7 +145,7 @@ Man, what can I say
 
 - 元素名：`h`
 - 属性：
-    - `color`：文本颜色。接受颜色字符串。为`none`, `white`, `red`, `blue`, `green`中的一个。文本在命令行中的默认颜色为 `none`。
+    - `color`：文本颜色。接受颜色字符串。为`none`, `red`, `blue`, `green`中的一个。文本在命令行中的默认颜色为 `none`。
     - `em`：emphasis，文本加粗。<u>无值</u>。
     - `i`：italic，文本斜体。<u>无值</u>。
     - `u`: underline, 文本下划线。<u>无值</u>。
@@ -414,24 +423,98 @@ HTML 源码是嵌套风格的语言。说到嵌套风格，你有没有想起来
 
 ## 输入格式
 
- 输入一个不知道多少行的魔改版 HTML 源代码。代码总长度小于 $10^5$。
+ 输入一个不知道多少行的魔改版 HTML 源代码。代码总长度小于 $10^4$。
 
 ## 输出格式
 
-输出一个 40 * 80 字符的网页渲染结果。
+输出一个 10 * 50 字符的网页渲染结果。
 
 ## 测试样例
+
+说明：输出必须是 10 * 50 的大小，空白用空格补全。
+
+样例为了美观，在正确的输出外面围了一圈边框，你并不需要输出这一圈边框。
 
 ### 样例一
 
 ```html
-<p>Hello</p>
+<p>HELL</p>
 ```
 
-```
-Hello
-```
+![case1.drawio](images/case1.drawio-17338990564041.svg)
 
 ### 样例二
 
-更多样例等待添加...
+```html
+<h u em>Lorem ipsum</h>
+<p color="green">Lorem ipsum dolor sit amet, Lorem ipsum sit amet.</p>
+<p i>Ut enim ad minim veniam, quis nostrud exercition.</p>
+<p u>Lit, sed do eiusmod incididunt ut labore et dole.</p>
+<p em>voluptate velit esse cillum dolore eu fugiat null.</p>
+```
+
+![case2.drawio](images/case2.drawio.svg)
+
+### 样例三
+
+```html
+<img 
+     src=" $$$$$$\  $$$$$$$\  $$\       $$  __$$\ $$  __$$\ $$ |      $$ /  \__|$$ |  $$ |$$ |      $$ |      $$$$$$$  |$$ |      $$ |      $$  ____/ $$ |      $$ |  $$\ $$ |      $$ |      \$$$$$$  |$$ |      $$$$$$$$\  \______/ \__|      \________|"
+     width="30"
+     ></img>
+```
+
+![case3.drawio](images/case3.drawio-17339010970022.svg)
+
+### 样例四
+
+h p img 混合
+
+### 样例五
+
+- 嵌套 
+- div 仅有 w 与 h 属性
+
+### 样例六
+
+- 嵌套
+
+- div 行列布局
+
+### 样例七
+
+```html
+<div
+     w="50"
+     h="10"
+     direction="row"
+     justify-content="center"
+     align-items="space-evenly"
+     >
+    <p>ELEMENT</p>
+    <div
+         w="20"
+         direction="column"
+         justify-content="start"
+         >
+        <p>ELEMENT</p>
+        <p>ELEMENT</p>
+    </div>
+    <div 
+         w="30"
+         direction="column"
+         justify-content="end"
+         >
+        <p>ELEMENT</p>
+        <p>ELEMENT</p>
+        <p>ELEMENT</p>
+    </div>
+    <img
+         src="@@@@@@"
+         width="3"
+         >
+	</img>
+</div>
+```
+
+![case7.drawio](images/case7.drawio.svg)

@@ -1,0 +1,4 @@
+*.c
+CMakeList.txt
+cmake-build-debug
+cases
