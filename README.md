@@ -303,9 +303,11 @@ Man, what can I say
 
 ##### 行列布局
 
-**按行布局**：并列的元素，每个元素单占一行。见下图中左侧。
+行列布局决定了 div 元素内，子元素沿什么方向排列。
 
-**按列布局**：并列的元素，每个元素单占一列。见下图中右侧。
+**按行布局**：并列的元素，每个元素是“一行”，即从上往下排元素。见下图中左侧。
+
+**按列布局**：并列的元素，每个元素是“一列”，即从左往右排元素。见下图中右侧。
 
 ![rowcol.drawio](images/rowcol.drawio-17337115444341.svg)
 
@@ -569,7 +571,7 @@ HTML 源码是嵌套风格的语言。说到嵌套风格，你有没有想起来
 </div>
 <div w="50" direction="column">
     <div w="5" h="1"></div>
-    <div w="20" h="8">
+    <div w="20" h="9">
         <h u>Bulletins</h>
         <div>
             <p>Solution of 2nd exam</p>
@@ -578,10 +580,9 @@ HTML 源码是嵌套风格的语言。说到嵌套风格，你有没有想起来
             <p i>3.feishu.t3</p>
         </div>
         <div>
-            <p>Please check your score</p>
-            <p i color="red">Check plagiarism</p>
-            <p i>2.feishu.t2</p>
-            <p i>3.feishu.t3</p>
+            <p>Check your score</p>
+            <p i color="red">1.Check plagiarism</p>
+            <p i>2.link</p>
         </div>
     </div>
     <div w="8" h="8"></div>
@@ -601,7 +602,7 @@ HTML 源码是嵌套风格的语言。说到嵌套风格，你有没有想起来
 </div>
 ```
 
-![image-20241214164040284](images/image-20241214164040284.png)
+![image-20241214190042879](images/image-20241214190042879.png)
 
 ### 样例七
 
@@ -640,3 +641,26 @@ HTML 源码是嵌套风格的语言。说到嵌套风格，你有没有想起来
 ```
 
 ![case7.drawio](images/case7.drawio.svg)
+
+### 样例八
+
+```html
+<div w="50" h="1" direction="column" justify-content="end">
+        <p em>Gmail  </p>
+        <p em>Images</p>
+    </div>
+<div w="50" h="9" direction="row" align-items="center" justify-content="center">
+    <img src=" ___                     __ |  __  __   __   __  |  |__ |___| |__| |__| |__| |_ |__                   _|        " width="28"></img>
+    <div w="20" h="1" direction="column" justify-content="center">
+        <p>[</p>
+        <p u>Q_________________</p>
+        <p>]</p>
+    </div>
+    <div w="50" h="1" direction="column" justify-content="space-evenly">
+        <p u color="blue">GOOGLE SEARCH</p>
+        <p u color="red">IM FEELING LUCKY</p>
+    </div>
+</div>
+```
+
+![image-20241214193327432](images/image-20241214193327432.png)

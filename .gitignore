@@ -2,4 +2,5 @@
 *.h
 CMakeLists.txt
 cmake-build-debug
+testcases
 .idea
