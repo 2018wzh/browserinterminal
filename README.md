@@ -596,6 +596,41 @@ void render(Element *element, int row, int col);
 
 错误数据点在评测信息里会乱序输出，这是评测机并发评测数据点导致的，目前没有较好的解决方法。
 
+> P.S. 此题中，spj 对于某个数据点是否正确，是通过如下(c++)代码判断的：
+>
+> ```cpp
+> bool compareLine(string oufLine, string ansLine) {
+>     trimEnd(oufLine);
+>     trimEnd(ansLine);
+>     return oufLine == ansLine;
+> }
+> 
+> some code...
+> 
+> // Compare the output and the answer
+> string oufLine, ansLine;        // store a single line of your output and the answer
+> while(getline(ans, ansLine)) {  // get a line from the answer
+>     string temp = ansLine;
+>     trimEnd(temp);              // trim ending space of ansLine
+>     if (!getline(ouf, oufLine) && !temp.empty()) {
+>         invalid("Output is too short");
+>     }
+>     if (!compareLine(oufLine, ansLine)) {
+>         invalid("Wrong answer");
+>     }
+> }
+> 
+> while (getline(ouf, oufLine)) {
+>     if (!oufLine.empty()) {
+>         invalid("Output is too long");
+>     }
+> }
+> ```
+>
+> 据此，你可以知道如何有效地输出空格才算答案正确。同时，别忘了 oj 会自动丢掉你的输出最末尾的所有空白符。
+>
+> 可以不用看这一段代码，反正按下面**输出格式**中的要求输出准没错。
+
 ### 数据分布
 
 为如下分布：
@@ -617,7 +652,7 @@ void render(Element *element, int row, int col);
 
 ## 测试样例
 
-说明：输出必须是 10 * 50 的大小，空白用空格补全。
+说明：输出的可见字符（不包括转义码）必须是 10 * 50 的大小，空白用空格补全。
 
 仓库中 `cases` 目录下有样例的输入和输出源文件，你可以使用输入重定向来读入文件。
 
