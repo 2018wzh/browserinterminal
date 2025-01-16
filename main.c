@@ -134,11 +134,8 @@ void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 	for (int j = 0; j < src->height; j++)
 		for (int i = 0; i < src->width; i++)
 		{
-			if ((y + j) < dst->height && (x + i) < dst->width)
-			{
-				dst->data[y + j][x + i] = src->data[j][i];
-				dst->format[y + j][x + i] = src->format[j][i];
-			}
+			dst->data[y + j][x + i] = src->data[j][i];
+			dst->format[y + j][x + i] = src->format[j][i];
 		}
 }
 
@@ -286,6 +283,8 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		DOM_Node *root = (DOM_Node *)malloc(sizeof(DOM_Node));
 		if (!root)
 			return NULL;
+		root->width = FB_MAX_WIDTH;
+		root->height = FB_MAX_HEIGHT;
 		root->type = ROOT;
 		root->parent = NULL;
 		root->children = NULL;
@@ -567,61 +566,61 @@ void IO_Print(FB_FrameBuffer *fb)
 		printf("\n");
 	}
 }
-
-void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, Position *pos)
+FB_FrameBuffer Render_Node(DOM_Node *node)
 {
-	if (node == NULL)
-		return;
+	FB_FrameBuffer fb = FB_Init(node->width, node->height);
 	DOM_Node *child;
-
 	switch (node->type)
 	{
 	case ROOT:
 		child = node->children;
+		int x = 0, y = 0;
 		while (child != NULL)
 		{
-			Render_Node(child, fb, pos);
+			FB_FrameBuffer child_fb = Render_Node(child);
+			FB_Copy(&child_fb, &fb, x, y);
+			y += child->height;
 			child = child->next;
 		}
 		break;
 	case TEXT:
 		for (int i = 0; i < node->width; i++)
 			for (int j = 0; j < node->height; j++)
-				FB_InsertChar(fb, pos->x + i, pos->y + j, node->value[j * node->width + i]);
+				FB_InsertChar(&fb, i, j, node->value[j * node->width + i]);
 		for (int i = 0; i < node->height; i++)
 		{
-			FB_InsertStyle(fb, pos->x, pos->y + i, node->style);
+			FB_InsertStyle(&fb, 0, i, node->style);
 			if (node->style != STYLE_UNDEFINED)
-				FB_InsertStyle(fb, pos->x + node->width - 1, pos->y + i, STYLE_RESET);
+				FB_InsertStyle(&fb, node->width - 1, i, STYLE_RESET);
 		}
-		pos->y += node->height;
 		break;
 	case IMAGE:
-		Render_Node(node->children, fb, pos);
+		fb = Render_Node(node->children);
 		break;
 	case DIVISION:
 		child = node->children;
 		while (child != NULL)
 		{
-			Render_Node(child, fb, pos);
+			FB_FrameBuffer child_fb = Render_Node(child);
+			FB_Copy(&child_fb, &fb, 0, 0);
 			if (node->direction == ROW)
-				pos->x += child->width + 1;
+				FB_Copy(&child_fb, &fb, child->width + 1, 0);
 			else
-				pos->y += child->height + 1;
+				FB_Copy(&child_fb, &fb, 0, child->height + 1);
 			child = child->next;
 		}
 		break;
 	case PARAGRAPH:
-		Render_Node(node->children, fb, pos);
+		fb = Render_Node(node->children);
 		break;
 	case HEADING:
-		Render_Node(node->children, fb, pos);
+		fb = Render_Node(node->children);
 		break;
 	default:
 		break;
 	}
+	return fb;
 }
-
 void Utils_PrintDomTree(DOM_Node *node, int depth)
 {
 	if (node == NULL)
@@ -810,7 +809,6 @@ int main(int argc, char *argv[])
 		freopen("../cases/case2.in", "r", stdin);
 	//*/
 	IO_File file = IO_Read();
-	FB_FrameBuffer fb = FB_Init(FB_MAX_WIDTH, FB_MAX_HEIGHT);
 	DOM_Token *tokens = DOM_Tokenizer(file);
 	// Utils_PrintTokens(tokens);
 	DOM_Token *current = tokens;
@@ -818,8 +816,8 @@ int main(int argc, char *argv[])
 	DOM_ApplyStyle(domTree);
 	// Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
-	Render_Node(domTree, &fb, &pos); // 从根节点渲染
-	Utils_PrintStyle(&fb);
+	FB_FrameBuffer fb = Render_Node(domTree);
+	// Utils_PrintStyle(&fb);
 	IO_Print(&fb);
 	return 0;
 }
