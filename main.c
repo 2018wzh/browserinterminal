@@ -56,6 +56,7 @@ typedef struct DOM_Node
 		COLUMN
 	} direction;
 	int data_width, data_height;
+	int childcount;
 	int width, height;
 	char *value;
 	STYLE style;
@@ -103,15 +104,8 @@ void Utils_PrintTokens(DOM_Token *token);
 void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
-	/*
-	if (argc == 3)
-	{
-		freopen(argv[1], "r", stdin);
-		freopen(argv[2], "w", stdout);
-	}*/
 
-	// else
-	// freopen("../cases/case2.in", "r", stdin);
+	// freopen("../cases/case8.in", "r", stdin);
 
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
@@ -152,6 +146,7 @@ void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 		printf("Error: Copy out of bounds\n");
 		printf("src:%dx%d\n", src->width, src->height);
 		IO_Print(src);
+		printf("at:(%d,%d)\n", x, y);
 		printf("dst:%dx%d\n", dst->width, dst->height);
 		IO_Print(dst);
 		return;
@@ -483,8 +478,10 @@ void DOM_ApplyStyle(DOM_Node *node)
 		break;
 	case DIVISION:
 		int total_width = 0, total_height = 0, max_width = 0, max_height = 0;
+		node->childcount = 0;
 		while (child != NULL)
 		{
+			node->childcount++;
 			total_width += child->width;
 			total_height += child->height;
 			if (child->height > max_height)
@@ -525,7 +522,7 @@ void DOM_ApplyStyle(DOM_Node *node)
 		node->height = child->height;
 		break;
 	case IMAGE:
-		child->height = strlen(child->value) / node->width;
+		node->height = child->height = strlen(child->value) / node->width;
 		child->width = node->width;
 		break;
 	}
@@ -597,13 +594,36 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 		while (child != NULL)
 		{
 			FB_FrameBuffer child_fb = Render_Node(child);
-			FB_Copy(&child_fb, &fb, x, y);
+			int dx = 0, dy = 0;
+			// FB_Copy(&child_fb, &fb, x, y);
 			if (node->direction == ROW)
 			{
+				if (node->justify_content == END)
+					dx = node->width - child->width;
+				else if (node->justify_content == CENTER || node->justify_content == SPACE_EVENLY)
+					dx = (node->width - child->width) / 2;
+				if (node->align_items == END)
+					dy = node->height - node->data_height;
+				else if (node->align_items == CENTER)
+					dy = (node->height - node->data_height) / 2;
+				else if (node->align_items == SPACE_EVENLY)
+					y += ((node->height - node->data_height) / (node->childcount + 1));
+				FB_Copy(&child_fb, &fb, x + dx, y + dy);
 				y += child->height;
 			}
 			else if (node->direction == COLUMN)
 			{
+				if (node->align_items == END)
+					dy = node->height - child->height;
+				else if (node->align_items == CENTER || node->align_items == SPACE_EVENLY)
+					dy = (node->height - child->height) / 2;
+				if (node->justify_content == END)
+					dx = node->width - node->data_width;
+				else if (node->justify_content == CENTER)
+					dx = (node->width - node->data_width) / 2;
+				else if (node->justify_content == SPACE_EVENLY)
+					x += ((node->width - node->data_width) / (node->childcount + 1));
+				FB_Copy(&child_fb, &fb, x + dx, y + dy);
 				x += child->width;
 			}
 			child = child->next;
@@ -681,35 +701,33 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		printf(" w=\"%d\"", node->width);
 		// 输出 h 属性
 		printf(" h=\"%d\"", node->height);
+		// 输出 data-w 属性
+		printf(" data-w=\"%d\"", node->data_width);
+		// 输出 data-h 属性
+		printf(" data-h=\"%d\"", node->data_height);
 		// 输出 direction 属性
 		if (node->direction == ROW)
 			printf(" direction=\"row\"");
 		else if (node->direction == COLUMN)
 			printf(" direction=\"column\"");
 		// 输出 align-items 属性
-		if (node->align_items != UNDEFINED)
-		{
-			if (node->align_items == START)
-				printf(" align-items=\"start\"");
-			else if (node->align_items == CENTER)
-				printf(" align-items=\"center\"");
-			else if (node->align_items == END)
-				printf(" align-items=\"end\"");
-			else if (node->align_items == SPACE_EVENLY)
-				printf(" align-items=\"space-evenly\"");
-		}
+		if (node->align_items == START)
+			printf(" align-items=\"start\"");
+		else if (node->align_items == CENTER)
+			printf(" align-items=\"center\"");
+		else if (node->align_items == END)
+			printf(" align-items=\"end\"");
+		else if (node->align_items == SPACE_EVENLY)
+			printf(" align-items=\"space-evenly\"");
 		// 输出 justify-content 属性
-		if (node->justify_content != UNDEFINED)
-		{
-			if (node->justify_content == START)
-				printf(" justify-content=\"start\"");
-			else if (node->justify_content == CENTER)
-				printf(" justify-content=\"center\"");
-			else if (node->justify_content == END)
-				printf(" justify-content=\"end\"");
-			else if (node->justify_content == SPACE_EVENLY)
-				printf(" justify-content=\"space-evenly\"");
-		}
+		if (node->justify_content == START)
+			printf(" justify-content=\"start\"");
+		else if (node->justify_content == CENTER)
+			printf(" justify-content=\"center\"");
+		else if (node->justify_content == END)
+			printf(" justify-content=\"end\"");
+		else if (node->justify_content == SPACE_EVENLY)
+			printf(" justify-content=\"space-evenly\"");
 		// 输出继承的属性
 		if (node->style & STYLE_RED && !(node->style & STYLE_GREEN) && !(node->style & STYLE_BLUE))
 			printf(" color=\"red\"");
@@ -724,6 +742,7 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		if (node->style & STYLE_UNDERLINE)
 			printf(" u");
 		printf("> ");
+		printf("childs: %d", node->childcount);
 		break;
 	case IMAGE:
 		printf("<img");
@@ -731,6 +750,7 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		if (node->children != NULL && node->children->type == TEXT)
 			printf(" src=\"%s\"", node->children->value);
 		printf(" width=\"%d\"", node->width);
+		printf(" height=\"%d\"", node->height);
 		printf(">");
 		break;
 	}
