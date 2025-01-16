@@ -36,7 +36,6 @@ typedef struct DOM_Node
 {
 	enum
 	{
-		ROOT,
 		HEADING,
 		PARAGRAPH,
 		IMAGE,
@@ -254,9 +253,12 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 			return NULL;
 		root->width = FB_MAX_WIDTH;
 		root->height = FB_MAX_HEIGHT;
-		root->type = ROOT;
+		root->type = DIVISION;
+		root->style = 0;
 		root->children = NULL;
 		root->next = NULL;
+		root->value = (char *)malloc(5 * sizeof(char));
+		strcpy(root->value, "root");
 		root->children = DOM_Parser(current, root);
 		return root;
 	}
@@ -329,78 +331,75 @@ void DOM_ApplyStyle(DOM_Node *node)
 	if (node == NULL)
 		return;
 	node->style = 0;
-	if (node->type != ROOT)
+	// 应用当前节点的默认样式
+	node->direction = ROW;
+	if (node->type == DIVISION)
 	{
-		// 应用当前节点的默认样式
-		node->direction = ROW;
-		if (node->type == DIVISION)
+		node->align_items = START;
+		node->justify_content = START;
+	}
+	else
+	{
+		node->align_items = UNDEFINED;
+		node->justify_content = UNDEFINED;
+	}
+	// 使用临时缓冲区复制 node->value 以避免修改原始字符串
+	char style_copy[DOM_STYLE_MAX_LENGTH];
+	strncpy(style_copy, node->value, DOM_STYLE_MAX_LENGTH - 1);
+	style_copy[DOM_STYLE_MAX_LENGTH - 1] = '\0';
+
+	char *style_token = strtok(style_copy, " ");
+	while (style_token != NULL)
+	{
+		if (strstr(style_token, "="))
 		{
-			node->align_items = START;
-			node->justify_content = START;
+			char key[DOM_STYLE_MAX_LENGTH], value[DOM_STYLE_MAX_LENGTH];
+			sscanf(style_token, "%[^=]=\"%[^\"]\"", key, value);
+
+			if (strcmp(key, "color") == 0)
+			{
+				if (strcmp(value, "red") == 0)
+					node->style |= STYLE_RED;
+				else if (strcmp(value, "green") == 0)
+					node->style |= STYLE_GREEN;
+				else if (strcmp(value, "blue") == 0)
+					node->style |= STYLE_BLUE;
+			}
+			else if (strcmp(key, "w") == 0 || strcmp(key, "width") == 0)
+				node->width = atoi(value);
+			else if (strcmp(key, "h") == 0 || strcmp(key, "height") == 0)
+				node->height = atoi(value);
+			else if (strcmp(key, "align-items") == 0)
+			{
+				if (strcmp(value, "center") == 0)
+					node->align_items = CENTER;
+				else if (strcmp(value, "end") == 0)
+					node->align_items = END;
+				else if (strcmp(value, "space-evenly") == 0)
+					node->align_items = SPACE_EVENLY;
+			}
+			else if (strcmp(key, "justify-content") == 0)
+			{
+				if (strcmp(value, "center") == 0)
+					node->justify_content = CENTER;
+				else if (strcmp(value, "end") == 0)
+					node->justify_content = END;
+				else if (strcmp(value, "space-evenly") == 0)
+					node->justify_content = SPACE_EVENLY;
+			}
 		}
 		else
 		{
-			node->align_items = UNDEFINED;
-			node->justify_content = UNDEFINED;
+			if (strcmp(style_token, "em") == 0)
+				node->style |= STYLE_EMPHASIS;
+			else if (strcmp(style_token, "b") == 0)
+				node->style |= STYLE_BOLD;
+			else if (strcmp(style_token, "i") == 0)
+				node->style |= STYLE_ITALIC;
+			else if (strcmp(style_token, "u") == 0)
+				node->style |= STYLE_UNDERLINE;
 		}
-		// 使用临时缓冲区复制 node->value 以避免修改原始字符串
-		char style_copy[DOM_STYLE_MAX_LENGTH];
-		strncpy(style_copy, node->value, DOM_STYLE_MAX_LENGTH - 1);
-		style_copy[DOM_STYLE_MAX_LENGTH - 1] = '\0';
-
-		char *style_token = strtok(style_copy, " ");
-		while (style_token != NULL)
-		{
-			if (strstr(style_token, "="))
-			{
-				char key[DOM_STYLE_MAX_LENGTH], value[DOM_STYLE_MAX_LENGTH];
-				sscanf(style_token, "%[^=]=\"%[^\"]\"", key, value);
-
-				if (strcmp(key, "color") == 0)
-				{
-					if (strcmp(value, "red") == 0)
-						node->style |= STYLE_RED;
-					else if (strcmp(value, "green") == 0)
-						node->style |= STYLE_GREEN;
-					else if (strcmp(value, "blue") == 0)
-						node->style |= STYLE_BLUE;
-				}
-				else if (strcmp(key, "w") == 0 || strcmp(key, "width") == 0)
-					node->width = atoi(value);
-				else if (strcmp(key, "h") == 0 || strcmp(key, "height") == 0)
-					node->height = atoi(value);
-				else if (strcmp(key, "align-items") == 0)
-				{
-					if (strcmp(value, "center") == 0)
-						node->align_items = CENTER;
-					else if (strcmp(value, "end") == 0)
-						node->align_items = END;
-					else if (strcmp(value, "space-evenly") == 0)
-						node->align_items = SPACE_EVENLY;
-				}
-				else if (strcmp(key, "justify-content") == 0)
-				{
-					if (strcmp(value, "center") == 0)
-						node->justify_content = CENTER;
-					else if (strcmp(value, "end") == 0)
-						node->justify_content = END;
-					else if (strcmp(value, "space-evenly") == 0)
-						node->justify_content = SPACE_EVENLY;
-				}
-			}
-			else
-			{
-				if (strcmp(style_token, "em") == 0)
-					node->style |= STYLE_EMPHASIS;
-				else if (strcmp(style_token, "b") == 0)
-					node->style |= STYLE_BOLD;
-				else if (strcmp(style_token, "i") == 0)
-					node->style |= STYLE_ITALIC;
-				else if (strcmp(style_token, "u") == 0)
-					node->style |= STYLE_UNDERLINE;
-			}
-			style_token = strtok(NULL, " ");
-		}
+		style_token = strtok(NULL, " ");
 	}
 	if (node->type == IMAGE)
 	{
@@ -423,17 +422,11 @@ void DOM_ApplyStyle(DOM_Node *node)
 		DOM_ApplyStyle(child);
 		child = child->next;
 	}
-	child = NULL;
-	if (node->type != TEXT)
-	{
-		child = node->children;
-		if (child == NULL)
-			return;
-	}
+	child = node->children;
+	if (child == NULL)
+		return;
 	switch (node->type)
 	{
-	case ROOT:
-		break;
 	case TEXT:
 		break;
 	case DIVISION:
@@ -531,19 +524,9 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 {
 	FB_FrameBuffer fb = FB_Init(node->width, node->height);
 	DOM_Node *child;
+	int x = 0, y = 0; // 初始化位置
 	switch (node->type)
 	{
-	case ROOT:
-		child = node->children;
-		int x = 0, y = 0;
-		while (child != NULL)
-		{
-			FB_FrameBuffer child_fb = Render_Node(child);
-			FB_Copy(&child_fb, &fb, x, y);
-			y += child->height;
-			child = child->next;
-		}
-		break;
 	case TEXT:
 		for (int i = 0; i < node->width; i++)
 			for (int j = 0; j < node->height; j++)
@@ -563,11 +546,13 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 		while (child != NULL)
 		{
 			FB_FrameBuffer child_fb = Render_Node(child);
-			FB_Copy(&child_fb, &fb, 0, 0);
-			if (node->direction == ROW)
-				FB_Copy(&child_fb, &fb, child->width + 1, 0);
+			printf("%dx%d\n", fb.width, fb.height);
+			IO_Print(&fb);
+			if (node->direction == COLUMN)
+				x += child->width;
 			else
-				FB_Copy(&child_fb, &fb, 0, child->height + 1);
+				y += child->height;
+			// FB_Copy(&child_fb, &fb, x, y);
 			child = child->next;
 		}
 		break;
@@ -592,9 +577,6 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		printf(" ");
 	switch (node->type)
 	{
-	case ROOT:
-		printf("<root>");
-		break;
 	case TEXT:
 		printf("%dx%d:", node->width, node->height);
 		printf("%s", node->value);
@@ -698,7 +680,7 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		if (node->children != NULL && node->children->type == TEXT)
 			printf(" src=\"%s\"", node->children->value);
 		printf(" width=\"%d\"", node->width);
-		printf("></img>");
+		printf(">");
 		break;
 	}
 	printf("\n");
@@ -768,8 +750,8 @@ int main(int argc, char *argv[])
 	// Utils_PrintTokens(tokens);
 	DOM_Token *current = tokens;
 	DOM_Node *domTree = DOM_Parser(&current, NULL);
-	// Utils_PrintDomTree(domTree, 0);
 	DOM_ApplyStyle(domTree);
+	Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
