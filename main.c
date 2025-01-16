@@ -12,10 +12,9 @@
 typedef enum
 {
 	STYLE_UNDEFINED = 0,
-	STYLE_BOLD = 1 << 1,
+	STYLE_EMPHASIS = 1 << 1,
 	STYLE_ITALIC = 1 << 2,
 	STYLE_UNDERLINE = 1 << 3,
-	STYLE_EMPHASIS = 1 << 4,
 	STYLE_RED = 1 << 5,
 	STYLE_GREEN = 1 << 6,
 	STYLE_BLUE = 1 << 7,
@@ -56,6 +55,7 @@ typedef struct DOM_Node
 		ROW,
 		COLUMN
 	} direction;
+	int data_width, data_height;
 	int width, height;
 	char *value;
 	STYLE style;
@@ -103,15 +103,16 @@ void Utils_PrintTokens(DOM_Token *token);
 void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
+	/*
 	if (argc == 3)
 	{
 		freopen(argv[1], "r", stdin);
 		freopen(argv[2], "w", stdout);
-	}
-	///*
-	else
-		freopen("../cases/case6.in", "r", stdin);
-	//*/
+	}*/
+
+	// else
+	// freopen("../cases/case2.in", "r", stdin);
+
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
 	// Utils_PrintTokens(tokens);
@@ -165,16 +166,12 @@ void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 void FB_InsertChar(FB_FrameBuffer *fb, int x, int y, char c)
 {
 	if (y < fb->height && x < fb->width)
-	{
 		fb->data[y][x] = c;
-	}
 }
 void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style)
 {
 	if (y < fb->height && x < fb->width)
-	{
 		fb->format[y][x] = style;
-	}
 }
 void FB_DrawStyle(STYLE style)
 {
@@ -186,7 +183,7 @@ void FB_DrawStyle(STYLE style)
 		printf("\033[34m");
 	if (style & STYLE_GREEN)
 		printf("\033[32m");
-	if (style & STYLE_BOLD)
+	if (style & STYLE_EMPHASIS)
 		printf("\033[1m");
 	if (style & STYLE_ITALIC)
 		printf("\033[3m");
@@ -449,8 +446,6 @@ void DOM_ApplyStyle(DOM_Node *node)
 		{
 			if (strcmp(style_token, "em") == 0)
 				node->style |= STYLE_EMPHASIS;
-			else if (strcmp(style_token, "b") == 0)
-				node->style |= STYLE_BOLD;
 			else if (strcmp(style_token, "i") == 0)
 				node->style |= STYLE_ITALIC;
 			else if (strcmp(style_token, "u") == 0)
@@ -487,17 +482,22 @@ void DOM_ApplyStyle(DOM_Node *node)
 	case TEXT:
 		break;
 	case DIVISION:
+		int total_width = 0, total_height = 0, max_width = 0, max_height = 0;
+		while (child != NULL)
+		{
+			total_width += child->width;
+			total_height += child->height;
+			if (child->height > max_height)
+				max_height = child->height;
+			if (child->width > max_width)
+				max_width = child->width;
+			child = child->next;
+		}
+		node->data_width = total_width;
+		node->data_height = total_height;
 		if (node->direction == COLUMN)
 		{
-			int total_width = 0;
-			int max_height = 0;
-			while (child != NULL)
-			{
-				total_width += child->width;
-				if (child->height > max_height)
-					max_height = child->height;
-				child = child->next;
-			}
+
 			if (node->width == 0)
 				node->width = total_width;
 			if (node->height == 0)
@@ -505,15 +505,6 @@ void DOM_ApplyStyle(DOM_Node *node)
 		}
 		else if (node->direction == ROW)
 		{
-			int total_height = 0;
-			int max_width = 0;
-			while (child != NULL)
-			{
-				total_height += child->height;
-				if (child->width > max_width)
-					max_width = child->width;
-				child = child->next;
-			}
 			if (node->width == 0)
 				node->width = max_width;
 			if (node->height == 0)
@@ -525,7 +516,6 @@ void DOM_ApplyStyle(DOM_Node *node)
 		for (int i = 0; i < strlen(child->value); i++)
 			if (child->value[i] >= 'a' && child->value[i] <= 'z')
 				child->value[i] -= 32;
-		child->style |= STYLE_BOLD;
 		node->width = child->width;
 		node->height = child->height;
 		break;
@@ -610,24 +600,11 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 			FB_Copy(&child_fb, &fb, x, y);
 			if (node->direction == ROW)
 			{
-				if (node->align_items == START)
-					y += child->height;
-				else if (node->align_items == CENTER)
-					y += (node->height - child->height) / 2;
-				else if (node->align_items == END)
-					y += node->height - child->height;
-				else if (node->align_items == SPACE_EVENLY)
-					y += child->height + (node->height - child->height * 2) / (node->height - 1);
+				y += child->height;
 			}
-			else if (node->direction == COLUMN){
-				if (node->align_items == START)
-					x += child->width;
-				else if (node->align_items == CENTER)
-					x += (node->width - child->width) / 2;
-				else if (node->align_items == END)
-					x += node->width - child->width;
-				else if (node->align_items == SPACE_EVENLY)
-					x += child->width + (node->width - child->width * 2) / (node->width - 1);
+			else if (node->direction == COLUMN)
+			{
+				x += child->width;
 			}
 			child = child->next;
 		}
@@ -795,13 +772,11 @@ void Utils_PrintStyle(FB_FrameBuffer *fb)
 				if (style & STYLE_BLUE)
 					printf("b");
 				if (style & STYLE_EMPHASIS)
-					printf("E");
+					printf("EM");
 				if (style & STYLE_ITALIC)
 					printf("I");
 				if (style & STYLE_UNDERLINE)
 					printf("U");
-				if (style & STYLE_BOLD)
-					printf("B");
 				if (style & STYLE_RESET)
 					printf("R");
 				printf("\n");
