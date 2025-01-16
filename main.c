@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 // framebuffer
@@ -60,7 +60,6 @@ typedef struct DOM_Node
 	int width, height;
 	char *value;
 	STYLE style;
-	struct DOM_Node *parent;
 	struct DOM_Node *children;
 	struct DOM_Node *next;
 } DOM_Node;
@@ -105,30 +104,6 @@ FB_FrameBuffer FB_Init(int width, int height)
 	}
 	return fb;
 }
-
-// 修改 FB_Free 函数以释放二维数组
-void FB_Free(FB_FrameBuffer *fb)
-{
-	if (fb->data != NULL)
-	{
-		for (int i = 0; i < fb->height; i++)
-		{
-			free(fb->data[i]);
-		}
-		free(fb->data);
-		fb->data = NULL;
-	}
-	if (fb->format != NULL)
-	{
-		for (int i = 0; i < fb->height; i++)
-		{
-			free(fb->format[i]);
-		}
-		free(fb->format);
-		fb->format = NULL;
-	}
-}
-
 void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 {
 	for (int j = 0; j < src->height; j++)
@@ -138,7 +113,6 @@ void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 			dst->format[y + j][x + i] = src->format[j][i];
 		}
 }
-
 void FB_InsertChar(FB_FrameBuffer *fb, int x, int y, char c)
 {
 	if (y < fb->height && x < fb->width)
@@ -146,7 +120,6 @@ void FB_InsertChar(FB_FrameBuffer *fb, int x, int y, char c)
 		fb->data[y][x] = c;
 	}
 }
-
 void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style)
 {
 	if (y < fb->height && x < fb->width)
@@ -154,7 +127,6 @@ void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style)
 		fb->format[y][x] = style;
 	}
 }
-
 void FB_DrawStyle(STYLE style)
 {
 	if (style == STYLE_UNDEFINED)
@@ -262,8 +234,6 @@ DOM_Token *DOM_Tokenizer(IO_File file)
 
 	return head;
 }
-
-// 添加自定义 strdup 函数以避免隐式声明错误
 char *strdup(const char *s)
 {
 	size_t len = strlen(s) + 1;
@@ -272,7 +242,6 @@ char *strdup(const char *s)
 		strcpy(d, s);
 	return d;
 }
-
 DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 {
 	if (*current == NULL)
@@ -286,7 +255,6 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		root->width = FB_MAX_WIDTH;
 		root->height = FB_MAX_HEIGHT;
 		root->type = ROOT;
-		root->parent = NULL;
 		root->children = NULL;
 		root->next = NULL;
 		root->children = DOM_Parser(current, root);
@@ -320,7 +288,6 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		// 初始化其他字段
 		node->width = 0;
 		node->height = 0;
-		node->parent = parent; // 记录父节点
 		node->children = NULL;
 		node->next = NULL;
 		node->value = malloc(strlen(token->value) + 1);
@@ -341,8 +308,8 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		node->value = strdup(token->value);
 		node->children = NULL;
 		node->next = NULL;
-		node->parent = parent; // 记录父节点
-
+		node->width = strlen(token->value);
+		node->height = 1;
 		// 移动到下一个token
 		*current = (*current)->next;
 	}
@@ -357,7 +324,6 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		node->next = DOM_Parser(current, parent);
 	return node;
 }
-
 void DOM_ApplyStyle(DOM_Node *node)
 {
 	if (node == NULL)
@@ -449,8 +415,6 @@ void DOM_ApplyStyle(DOM_Node *node)
 		node->children->value = strdup(src);
 		node->children->next = NULL;
 		node->children->children = NULL;
-		node->children->width = node->width;
-		node->children->height = strlen(src) / node->width;
 	}
 	// 递归遍历子节点并应用样式
 	DOM_Node *child = node->children;
@@ -460,21 +424,19 @@ void DOM_ApplyStyle(DOM_Node *node)
 		child = child->next;
 	}
 	child = NULL;
-	// 处理继承属性，改为使用 switch-case
+	if (node->type != TEXT)
+	{
+		child = node->children;
+		if (child == NULL)
+			return;
+	}
 	switch (node->type)
 	{
 	case ROOT:
 		break;
 	case TEXT:
-		node->width = strlen(node->value);
-		node->height = 1;
-		if (node->parent != NULL)
-			node->style = node->parent->style;
 		break;
 	case DIVISION:
-		child = node->children;
-		if (child == NULL)
-			return;
 		if (node->direction == ROW)
 		{
 			int total_width = 0;
@@ -505,7 +467,7 @@ void DOM_ApplyStyle(DOM_Node *node)
 		}
 		break;
 	case HEADING:
-		child = node->children;
+		child->style = node->style;
 		for (int i = 0; i < strlen(child->value); i++)
 			if (child->value[i] >= 'a' && child->value[i] <= 'z')
 				child->value[i] -= 32;
@@ -514,12 +476,11 @@ void DOM_ApplyStyle(DOM_Node *node)
 		node->height = child->height;
 		break;
 	case PARAGRAPH:
-		child = node->children;
+		child->style = node->style;
 		node->width = child->width;
 		node->height = child->height;
 		break;
 	case IMAGE:
-		child = node->children;
 		child->height = strlen(child->value) / node->width;
 		child->width = node->width;
 		break;
@@ -619,6 +580,8 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 	default:
 		break;
 	}
+	// printf("%dx%d\n", fb.width, fb.height);
+	// IO_Print(&fb);
 	return fb;
 }
 void Utils_PrintDomTree(DOM_Node *node, int depth)
@@ -633,16 +596,14 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		printf("<root>");
 		break;
 	case TEXT:
+		printf("%dx%d:", node->width, node->height);
 		printf("%s", node->value);
 		break;
 	case HEADING:
 		printf("<h");
 		// 输出 w 属性
-		if (node->width >= 0)
-			printf(" w=\"%d\"", node->width);
-		// 输出 h 属性
-		if (node->height >= 0)
-			printf(" h=\"%d\"", node->height);
+		printf(" w=\"%d\"", node->width);
+		printf(" h=\"%d\"", node->height);
 		// 输出 color 属性
 		if (node->style & STYLE_RED)
 			printf(" color=\"red\"");
@@ -662,11 +623,9 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 	case PARAGRAPH:
 		printf("<p");
 		// 输出 w 属性
-		if (node->width >= 0)
-			printf(" w=\"%d\"", node->width);
+		printf(" w=\"%d\"", node->width);
 		// 输出 h 属性
-		if (node->height >= 0)
-			printf(" h=\"%d\"", node->height);
+		printf(" h=\"%d\"", node->height);
 		// 输出 color 属性
 		if (node->style & STYLE_RED)
 			printf(" color=\"red\"");
@@ -686,11 +645,9 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 	case DIVISION:
 		printf("<div");
 		// 输出 w 属性
-		if (node->width >= 0)
-			printf(" w=\"%d\"", node->width);
+		printf(" w=\"%d\"", node->width);
 		// 输出 h 属性
-		if (node->height >= 0)
-			printf(" h=\"%d\"", node->height);
+		printf(" h=\"%d\"", node->height);
 		// 输出 direction 属性
 		if (node->direction == ROW)
 			printf(" direction=\"row\"");
@@ -740,9 +697,7 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 		// 输出 src 属性
 		if (node->children != NULL && node->children->type == TEXT)
 			printf(" src=\"%s\"", node->children->value);
-		// 输出 width 属性
-		if (node->width > 0)
-			printf(" width=\"%d\"", node->width);
+		printf(" width=\"%d\"", node->width);
 		printf("></img>");
 		break;
 	}
@@ -806,15 +761,15 @@ int main(int argc, char *argv[])
 	}
 	///*
 	else
-		freopen("../cases/case2.in", "r", stdin);
+		freopen("../cases/case6.in", "r", stdin);
 	//*/
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
 	// Utils_PrintTokens(tokens);
 	DOM_Token *current = tokens;
 	DOM_Node *domTree = DOM_Parser(&current, NULL);
-	DOM_ApplyStyle(domTree);
 	// Utils_PrintDomTree(domTree, 0);
+	DOM_ApplyStyle(domTree);
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
