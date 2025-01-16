@@ -96,6 +96,7 @@ void FB_DrawStyleReset(STYLE s);
 DOM_Token *DOM_Tokenizer(IO_File file);
 DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent);
 void DOM_ApplyStyle(DOM_Node *node);
+void DOM_InheritStyle(DOM_Node *node);
 IO_File IO_Read();
 void IO_Print(FB_FrameBuffer *fb);
 FB_FrameBuffer Render_Node(DOM_Node *node);
@@ -105,7 +106,7 @@ void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
 
-	// freopen("../cases/case8.in", "r", stdin);
+	// freopen("../cases/example4.in", "r", stdin);
 
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
@@ -113,6 +114,7 @@ int main(int argc, char *argv[])
 	DOM_Token *current = tokens;
 	DOM_Node *domTree = DOM_Parser(&current, NULL);
 	DOM_ApplyStyle(domTree);
+	DOM_InheritStyle(domTree);
 	// Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
@@ -462,7 +464,6 @@ void DOM_ApplyStyle(DOM_Node *node)
 		node->children->next = NULL;
 		node->children->children = NULL;
 	}
-	// 递归遍历子节点并应用样式
 	DOM_Node *child = node->children;
 	while (child != NULL)
 	{
@@ -525,6 +526,30 @@ void DOM_ApplyStyle(DOM_Node *node)
 		node->height = child->height = strlen(child->value) / node->width;
 		child->width = node->width;
 		break;
+	}
+}
+void DOM_InheritStyle(DOM_Node *node)
+{
+	if (node == NULL)
+		return;
+	DOM_Node *child = node->children;
+	while (child != NULL)
+	{
+		if (child->style == STYLE_UNDEFINED)
+			child->style = node->style;
+		else
+		{
+			if (!(child->style & STYLE_ITALIC))
+				child->style |= node->style & STYLE_ITALIC;
+			if (!(child->style & STYLE_EMPHASIS))
+				child->style |= node->style & STYLE_EMPHASIS;
+			if (!(child->style & STYLE_UNDERLINE))
+				child->style |= node->style & STYLE_UNDERLINE;
+			if (!(child->style & STYLE_RED || child->style & STYLE_GREEN || child->style & STYLE_BLUE))
+				child->style |= node->style & (STYLE_RED | STYLE_GREEN | STYLE_BLUE);
+		}
+		DOM_InheritStyle(child);
+		child = child->next;
 	}
 }
 IO_File IO_Read()
@@ -649,8 +674,22 @@ void Utils_PrintDomTree(DOM_Node *node, int depth)
 	switch (node->type)
 	{
 	case TEXT:
-		printf("%dx%d:", node->width, node->height);
-		printf("%s", node->value);
+		printf("%dx%d:[", node->width, node->height);
+		// 输出 color 属性
+		if (node->style & STYLE_RED)
+			printf("color=\"red\"");
+		else if (node->style & STYLE_GREEN)
+			printf("color=\"green\"");
+		else if (node->style & STYLE_BLUE)
+			printf("color=\"blue\"");
+		// 输出其他无值属性
+		if (node->style & STYLE_EMPHASIS)
+			printf(" em");
+		if (node->style & STYLE_ITALIC)
+			printf(" i");
+		if (node->style & STYLE_UNDERLINE)
+			printf(" u");
+		printf("]%s", node->value);
 		break;
 	case HEADING:
 		printf("<h");
