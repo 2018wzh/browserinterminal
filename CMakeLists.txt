@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR})
 file(GLOB_RECURSE sources "src/*.c")
-add_executable(browserinterminal main.c ${sources})
+add_executable(browserinterminal main.c)
 
 project(test)
 add_dependencies(browserinterminal test)
