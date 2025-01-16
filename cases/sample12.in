@@ -1,0 +1,19 @@
+<div
+    w="50"
+    h="7"
+    justify-content="center"
+    align-items="space-evenly"
+    direction="column"
+    >
+    <p>MANBA</p>
+    <div w="8" h="7"
+     align-items="space-evenly"
+      >
+       <p>ikun</p>
+       <p>laker24</p>
+       <p> @w@ </p>
+    </div>
+   <div w="25" h="3">
+   <img src="@w@@w@@w@" width="3"></img>
+   </div>
+</div>

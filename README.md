@@ -5,7 +5,6 @@
 > 如果你对此题有好的建议或者疑问，mail to 221850148@smail.nju.edu.cn
 
 - TODO list
-    - 提供加强版的数据与样例，以及相关说明
 - `2024-12-11`
     - p 和 h 元素的 color 属性中删除了 `white`，因为字太白在白色背景终端不便查看
     - 渲染分辨率从 40 * 80 换成了 10 * 50，在 clion 终端中观感正常
@@ -31,6 +30,7 @@
     - 重新描述了输出格式
 - `2025-01-16`
     - 更新了软院版本要求：\<style> 标签
+    - 更新了很多描述，看 commit 记录吧
 
 
 
@@ -242,9 +242,9 @@ Man, what can I say
 
 ##### 样式(style)*
 
-> 软院版需要考虑这个元素
+> 软院班(class0)需要考虑这个元素
 
-style 标签能定义某类元素的属性，或者提供自定义属性
+style 标签能向某类元素指派（Assign）属性，或者提供自定义属性。
 
 - 元素名：`style`
 - 属性：无
@@ -261,9 +261,9 @@ style 标签能定义某类元素的属性，或者提供自定义属性
 
 使用说明：
 
-- **定义某类元素的属性**。
+- **向某类元素指派属性**。
 
-    - 下例中，style 会使得代码中**所有** p 元素拥有 color 和 em 属性，所有 h 元素拥有 u 属性。即使元素没有显式包含上述属性。
+    - 下例中，style 会使得代码中**所有** p 元素拥有 color 和 em 属性，所有 h 元素拥有 u 属性。即使元素没有显式包含上述属性。但是，当元素显式指定属性时，以显式指定的为准。
 
     ```html
     <style>
@@ -271,6 +271,7 @@ style 标签能定义某类元素的属性，或者提供自定义属性
         h { u; }
     </style>
     <h>This header will be underlined</h>
+    <p color="blue">This paragraph will be blue and emphasized</p>
     ```
 
 - **自定义属性**。将已知的属性包装成一个新的**无值属性**。
@@ -279,18 +280,21 @@ style 标签能定义某类元素的属性，或者提供自定义属性
     <style>
         .my-style { color:red;em; }
     </style>
-    <p my-style>This paragraph will be emphasized and in red</p>
+    <p my-style>This paragraph will be red and emphasized</p>
     ```
     
 
 规定：
 
-- style 中的空白符，严格遵循格式以及例子中的样式
+- style 中的空白符，严格遵循格式以及例子中的样式。即每一行开头有 4 个空格，`{` 前后各一个空格，`}` 前一个空格 
 - style 元素如果出现，一定是代码中的**第一个元素**，并且其作用域为整个代码文本中的**所有元素**
 - 只会定义 p 和 h 元素的属性。也就是说，样式中的 `元素名` 只可能为 `p` 或者 `h`
 - 自定义属性由前导 `.` 标识，并且自定义属性名只会出现字母和 `-` (英文减号)
+- 自定义属性不超过 10 个，名称长度不超过 50 个字符
 - 自定义属性中，只会出现对 p, h, div 有作用的属性
     - 具体来说，是这些：`em` `i` `u` `color` `w` `h` `direction` `align-items` `justify-content`
+- 为了简化，自定义属性**不可继承**，即使自定义属性里包含了可继承的属性
+- 标签中不会重复出现自定义属性中包含的属性
 
 #### 属性
 
@@ -301,14 +305,14 @@ style 标签能定义某类元素的属性，或者提供自定义属性
 2. 从*父元素*继承的属性与*子元素*自己所拥有的属性发生*冲突*时，以*子元素*的属性为准
 
     - ```html
-        <div color="white">
+        <div color="blue">
             <p color="red">I'm Red</p>
         </div>
         ```
 
     - 上例中，`color` 属性以 p 元素的为准
 
-我们给出一个尽可能全的例子，方便大家理解与实现：
+我们给出一个尽可能全的例子，方便大家理解与实现（测试点不存在 white，但例子里忘改了，将就看吧）：
 
 ```html
 <div color="white">
@@ -692,12 +696,19 @@ void render(Element *element, int row, int col);
 
 技科版(class 1~7)为如下分布：
 
-- phTest (4 cases, 20pts): 只包含 `p` 和 `h` 元素
-- phimgTest (8 cases, 40pts): 只包含 `p`, `h` 和 `img` 元素
-- divTest (4 cases, 20pts): 包含全部元素。保证 `div` 元素只含 `w` 和 `h` 属性
-- layoutTest (4 cases, 20pts): 包含全部元素与属性
+- phTest (4 cases, 20 pts): 只包含 `p` 和 `h` 元素
+- phimgTest (8 cases, 40 pts): 只包含 `p`, `h` 和 `img` 元素
+- divTest (4 cases, 20 pts): 包含全部元素。保证 `div` 元素只含 `w` 和 `h` 属性
+- layoutTest (4 cases, 20 pts): 包含全部元素与属性
 
-软院版(class 0)还未造数据。
+软院版(class 0)为如下分布：
+
+- phTest (2 cases, 10 pts)：只包含 `p` 和 `h` 元素
+- phimgTest (4 cases, 20 pts)：只包含 `p`, `h` 和 `img` 元素
+- divTest (4 cases, 20 pts)：包含除了 `style` 之外的全部元素。保证 `div` 元素只含 `w` 和 `h` 属性
+- layoutTest (4 cases, 20 pts)：包含除了 `style` 之外的全部元素。`div` 元素会包含布局属性
+- styleTest (4 cases, 10 pts)：只包含 `p`，`h` 和 `style` 元素
+- hardTest (2 cases, 10 pts)：包含全部元素与属性
 
 ## 输入格式
 
@@ -882,3 +893,7 @@ void render(Element *element, int row, int col);
 ```
 
 ![image-20241214193327432](images/image-20241214193327432.png)
+
+**剩余样例请在仓库 `cases` 目录下查阅！**
+
+Good luck :)

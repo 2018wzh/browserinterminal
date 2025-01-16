@@ -1,0 +1,12 @@
+<div w="50" h="10">
+  <h em color="green">PLACEHOLDERPLACEHOLDER</h>
+  <p i u>PLACEHOLDERPLACEHOLDERPLACEHOLDER</p>
+  <div w="40" h="5">
+    <p color="red">PLACEHOLDERPLACEHOLDER</p>
+    <img src="PLACEHOLDE" width="5"></img>
+  </div>
+  <div w="50">
+    <p color="blue">PLACEHOLDER</p>
+    <img src="PLACEHOLDE" width="5"></img>
+  </div>
+</div>
