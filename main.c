@@ -85,6 +85,47 @@ typedef struct Position
 	int x, y;
 } Position;
 
+char *strdup(const char *s);
+FB_FrameBuffer FB_Init(int width, int height);
+void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y);
+void FB_InsertChar(FB_FrameBuffer *fb, int x, int y, char c);
+void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style);
+void FB_DrawStyle(STYLE style);
+void FB_DrawStyleReset(STYLE s);
+DOM_Token *DOM_Tokenizer(IO_File file);
+DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent);
+void DOM_ApplyStyle(DOM_Node *node);
+IO_File IO_Read();
+void IO_Print(FB_FrameBuffer *fb);
+FB_FrameBuffer Render_Node(DOM_Node *node);
+void Utils_PrintDomTree(DOM_Node *node, int depth);
+void Utils_PrintTokens(DOM_Token *token);
+void Utils_PrintStyle(FB_FrameBuffer *fb);
+int main(int argc, char *argv[])
+{
+	if (argc == 3)
+	{
+		freopen(argv[1], "r", stdin);
+		freopen(argv[2], "w", stdout);
+	}
+	///*
+	else
+		freopen("../cases/case6.in", "r", stdin);
+	//*/
+	IO_File file = IO_Read();
+	DOM_Token *tokens = DOM_Tokenizer(file);
+	// Utils_PrintTokens(tokens);
+	DOM_Token *current = tokens;
+	DOM_Node *domTree = DOM_Parser(&current, NULL);
+	DOM_ApplyStyle(domTree);
+	// Utils_PrintDomTree(domTree, 0);
+	Position pos = {0, 0};
+	FB_FrameBuffer fb = Render_Node(domTree);
+	// Utils_PrintStyle(&fb);
+	IO_Print(&fb);
+	return 0;
+}
+
 FB_FrameBuffer FB_Init(int width, int height)
 {
 	FB_FrameBuffer fb;
@@ -105,6 +146,15 @@ FB_FrameBuffer FB_Init(int width, int height)
 }
 void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 {
+	if (src->width + x > dst->width || src->height + y > dst->height)
+	{
+		printf("Error: Copy out of bounds\n");
+		printf("src:%dx%d\n", src->width, src->height);
+		IO_Print(src);
+		printf("dst:%dx%d\n", dst->width, dst->height);
+		IO_Print(dst);
+		return;
+	}
 	for (int j = 0; j < src->height; j++)
 		for (int i = 0; i < src->width; i++)
 		{
@@ -387,6 +437,13 @@ void DOM_ApplyStyle(DOM_Node *node)
 				else if (strcmp(value, "space-evenly") == 0)
 					node->justify_content = SPACE_EVENLY;
 			}
+			else if (strcmp(key, "direction") == 0)
+			{
+				if (strcmp(value, "column") == 0)
+					node->direction = COLUMN;
+				else if (strcmp(value, "row") == 0)
+					node->direction = ROW;
+			}
 		}
 		else
 		{
@@ -430,7 +487,7 @@ void DOM_ApplyStyle(DOM_Node *node)
 	case TEXT:
 		break;
 	case DIVISION:
-		if (node->direction == ROW)
+		if (node->direction == COLUMN)
 		{
 			int total_width = 0;
 			int max_height = 0;
@@ -441,10 +498,12 @@ void DOM_ApplyStyle(DOM_Node *node)
 					max_height = child->height;
 				child = child->next;
 			}
-			node->width = (node->width > 0) ? node->width : total_width;
-			node->height = (node->height > 0) ? node->height : max_height;
+			if (node->width == 0)
+				node->width = total_width;
+			if (node->height == 0)
+				node->height = max_height;
 		}
-		else if (node->direction == COLUMN)
+		else if (node->direction == ROW)
 		{
 			int total_height = 0;
 			int max_width = 0;
@@ -455,8 +514,10 @@ void DOM_ApplyStyle(DOM_Node *node)
 					max_width = child->width;
 				child = child->next;
 			}
-			node->width = (node->width > 0) ? node->width : max_width;
-			node->height = (node->height > 0) ? node->height : total_height;
+			if (node->width == 0)
+				node->width = max_width;
+			if (node->height == 0)
+				node->height = total_height;
 		}
 		break;
 	case HEADING:
@@ -546,13 +607,28 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 		while (child != NULL)
 		{
 			FB_FrameBuffer child_fb = Render_Node(child);
-			printf("%dx%d\n", fb.width, fb.height);
-			IO_Print(&fb);
-			if (node->direction == COLUMN)
-				x += child->width;
-			else
-				y += child->height;
-			// FB_Copy(&child_fb, &fb, x, y);
+			FB_Copy(&child_fb, &fb, x, y);
+			if (node->direction == ROW)
+			{
+				if (node->align_items == START)
+					y += child->height;
+				else if (node->align_items == CENTER)
+					y += (node->height - child->height) / 2;
+				else if (node->align_items == END)
+					y += node->height - child->height;
+				else if (node->align_items == SPACE_EVENLY)
+					y += child->height + (node->height - child->height * 2) / (node->height - 1);
+			}
+			else if (node->direction == COLUMN){
+				if (node->align_items == START)
+					x += child->width;
+				else if (node->align_items == CENTER)
+					x += (node->width - child->width) / 2;
+				else if (node->align_items == END)
+					x += node->width - child->width;
+				else if (node->align_items == SPACE_EVENLY)
+					x += child->width + (node->width - child->width * 2) / (node->width - 1);
+			}
 			child = child->next;
 		}
 		break;
@@ -565,8 +641,6 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 	default:
 		break;
 	}
-	// printf("%dx%d\n", fb.width, fb.height);
-	// IO_Print(&fb);
 	return fb;
 }
 void Utils_PrintDomTree(DOM_Node *node, int depth)
@@ -732,29 +806,4 @@ void Utils_PrintStyle(FB_FrameBuffer *fb)
 					printf("R");
 				printf("\n");
 			}
-}
-
-int main(int argc, char *argv[])
-{
-	if (argc == 3)
-	{
-		freopen(argv[1], "r", stdin);
-		freopen(argv[2], "w", stdout);
-	}
-	///*
-	else
-		freopen("../cases/case6.in", "r", stdin);
-	//*/
-	IO_File file = IO_Read();
-	DOM_Token *tokens = DOM_Tokenizer(file);
-	// Utils_PrintTokens(tokens);
-	DOM_Token *current = tokens;
-	DOM_Node *domTree = DOM_Parser(&current, NULL);
-	DOM_ApplyStyle(domTree);
-	Utils_PrintDomTree(domTree, 0);
-	Position pos = {0, 0};
-	FB_FrameBuffer fb = Render_Node(domTree);
-	// Utils_PrintStyle(&fb);
-	IO_Print(&fb);
-	return 0;
 }
