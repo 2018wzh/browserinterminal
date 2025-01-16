@@ -9,114 +9,159 @@
 #define IO_MAX_FILENAME 256
 #define IO_MAX_STRING_LENGTH 10000
 // style
-#define STYLE_BOLD 0b00000001
-#define STYLE_ITALIC 0b00000010
-#define STYLE_UNDERLINE 0b00000100
-#define STYLE_EMPHASIS 0b00001000
-#define STYLE_RED 0b00010000
-#define STYLE_GREEN 0b00100000
-#define STYLE_BLUE 0b01000000
-#define STYLE_RESET 0b10000000
+typedef enum
+{
+	STYLE_UNDEFINED = 0,
+	STYLE_BOLD = 1 << 1,
+	STYLE_ITALIC = 1 << 2,
+	STYLE_UNDERLINE = 1 << 3,
+	STYLE_EMPHASIS = 1 << 4,
+	STYLE_RED = 1 << 5,
+	STYLE_GREEN = 1 << 6,
+	STYLE_BLUE = 1 << 7,
+	STYLE_RESET = 1 << 8
+} STYLE;
 // DOM
 #define DOM_MAX_STRING_LENGTH 500
 #define DOM_STYLE_MAX_LENGTH 500
 
-typedef short STYLE;
 typedef struct FB_FrameBuffer
 {
-    char *data;
-    STYLE *format; // 存储每个像素的颜色格式
-    int width, height;
+	char **data;
+	STYLE **format; // 存储每个像素的颜色格式
+	int width, height;
 } FB_FrameBuffer;
 
 typedef struct DOM_Node
 {
-    enum
-    {
-        ROOT,
-        HEADING,
-        PARAGRAPH,
-        IMAGE,
-        DIVISION,
-        TEXT
-    } type;
-    enum
-    {
-        START,
-        CENTER,
-        END,
-        SPACE_EVENLY,
-        UNDEFINED
-    } align_items,
-        justify_content;
-    enum
-    {
-        ROW,
-        COLUMN
-    } direction;
-    int width, height;
-    char *value;
-    STYLE style;
-    struct DOM_Node *parent;
-    struct DOM_Node *children;
-    struct DOM_Node *next;
+	enum
+	{
+		ROOT,
+		HEADING,
+		PARAGRAPH,
+		IMAGE,
+		DIVISION,
+		TEXT
+	} type;
+	enum
+	{
+		START,
+		CENTER,
+		END,
+		SPACE_EVENLY,
+		UNDEFINED
+	} align_items,
+		justify_content;
+	enum
+	{
+		ROW,
+		COLUMN
+	} direction;
+	int width, height;
+	char *value;
+	STYLE style;
+	struct DOM_Node *parent;
+	struct DOM_Node *children;
+	struct DOM_Node *next;
 } DOM_Node;
 typedef struct DOM_Token
 {
-    enum
-    {
-        TOKEN_TEXT,
-        TAG_OPEN,
-        TAG_CLOSE,
-    } type;
-    char *value;
-    struct DOM_Token *next;
+	enum
+	{
+		TOKEN_TEXT,
+		TAG_OPEN,
+		TAG_CLOSE,
+	} type;
+	char *value;
+	struct DOM_Token *next;
 } DOM_Token;
 
 typedef struct
 {
-    char *data;
-    int length;
+	char *data;
+	int length;
 } IO_File;
 
 typedef struct Position
 {
-    int x, y;
+	int x, y;
 } Position;
+
 FB_FrameBuffer FB_Init(int width, int height)
 {
 	FB_FrameBuffer fb;
 	fb.width = width;
 	fb.height = height;
-	fb.data = (char *)malloc(width * height);
-	fb.format = (STYLE *)malloc(width * height);
-	memset(fb.data, ' ', width * height);
-	memset(fb.format, 0, width * height);
+
+	// 分配行指针
+	fb.data = (char **)malloc(height * sizeof(char *));
+	fb.format = (STYLE **)malloc(height * sizeof(STYLE *));
+	for (int i = 0; i < height; i++)
+	{
+		fb.data[i] = (char *)malloc(width * sizeof(char));
+		fb.format[i] = (STYLE *)malloc(width * sizeof(STYLE));
+		memset(fb.data[i], ' ', width * sizeof(char));
+		memset(fb.format[i], STYLE_UNDEFINED, width * sizeof(STYLE));
+	}
 	return fb;
 }
+
+// 修改 FB_Free 函数以释放二维数组
+void FB_Free(FB_FrameBuffer *fb)
+{
+	if (fb->data != NULL)
+	{
+		for (int i = 0; i < fb->height; i++)
+		{
+			free(fb->data[i]);
+		}
+		free(fb->data);
+		fb->data = NULL;
+	}
+	if (fb->format != NULL)
+	{
+		for (int i = 0; i < fb->height; i++)
+		{
+			free(fb->format[i]);
+		}
+		free(fb->format);
+		fb->format = NULL;
+	}
+}
+
 void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 {
-	for (int i = 0; i < src->height; i++)
-		for (int j = 0; j < src->width; j++)
+	for (int j = 0; j < src->height; j++)
+		for (int i = 0; i < src->width; i++)
 		{
-			int src_index = i * src->width + j;
-			int dst_index = (i + y) * dst->width + j + x;
-			dst->data[dst_index] = src->data[src_index];
-			dst->format[dst_index] = src->format[src_index];
+			if ((y + j) < dst->height && (x + i) < dst->width)
+			{
+				dst->data[y + j][x + i] = src->data[j][i];
+				dst->format[y + j][x + i] = src->format[j][i];
+			}
 		}
 }
+
 void FB_InsertChar(FB_FrameBuffer *fb, int x, int y, char c)
 {
-	int index = y * fb->width + x;
-	fb->data[index] = c;
+	if (y < fb->height && x < fb->width)
+	{
+		fb->data[y][x] = c;
+	}
 }
+
 void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style)
 {
-	int index = y * fb->width + x;
-	fb->format[index] = style;
+	if (y < fb->height && x < fb->width)
+	{
+		fb->format[y][x] = style;
+	}
 }
+
 void FB_DrawStyle(STYLE style)
 {
+	if (style == STYLE_UNDEFINED)
+		return;
 	if (style & STYLE_RED)
 		printf("\033[31m");
 	if (style & STYLE_BLUE)
@@ -129,7 +174,10 @@ void FB_DrawStyle(STYLE style)
 		printf("\033[3m");
 	if (style & STYLE_UNDERLINE)
 		printf("\033[4m");
-	if (style & STYLE_RESET)
+}
+void FB_DrawStyleReset(STYLE s)
+{
+	if (s & STYLE_RESET)
 		printf("\033[0m");
 }
 DOM_Token *DOM_Tokenizer(IO_File file)
@@ -216,6 +264,16 @@ DOM_Token *DOM_Tokenizer(IO_File file)
 	}
 
 	return head;
+}
+
+// 添加自定义 strdup 函数以避免隐式声明错误
+char *strdup(const char *s)
+{
+	size_t len = strlen(s) + 1;
+	char *d = malloc(len);
+	if (d)
+		strcpy(d, s);
+	return d;
 }
 
 DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
@@ -452,6 +510,7 @@ void DOM_ApplyStyle(DOM_Node *node)
 		for (int i = 0; i < strlen(child->value); i++)
 			if (child->value[i] >= 'a' && child->value[i] <= 'z')
 				child->value[i] -= 32;
+		child->style |= STYLE_BOLD;
 		node->width = child->width;
 		node->height = child->height;
 		break;
@@ -497,17 +556,18 @@ IO_File IO_Read()
 }
 void IO_Print(FB_FrameBuffer *fb)
 {
-	for (int i = 0; i < fb->height; i++)
+	for (int j = 0; j < fb->height; j++)
 	{
-		for (int j = 0; j < fb->width; j++)
+		for (int i = 0; i < fb->width; i++)
 		{
-			int index = i * fb->width + j;
-			FB_DrawStyle(fb->format[index]);
-			printf("%c", fb->data[index]);
+			FB_DrawStyle(fb->format[j][i]);
+			printf("%c", fb->data[j][i]);
+			FB_DrawStyleReset(fb->format[j][i]);
 		}
 		printf("\n");
 	}
 }
+
 void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, Position *pos)
 {
 	if (node == NULL)
@@ -525,13 +585,14 @@ void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, Position *pos)
 		}
 		break;
 	case TEXT:
-		for (int i = 0; i < node->height; i++)
-			for (int j = 0; j < node->width; j++)
-				FB_InsertChar(fb, pos->x + j, pos->y + i, node->value[i * node->width + j]);
+		for (int i = 0; i < node->width; i++)
+			for (int j = 0; j < node->height; j++)
+				FB_InsertChar(fb, pos->x + i, pos->y + j, node->value[j * node->width + i]);
 		for (int i = 0; i < node->height; i++)
 		{
-			FB_InsertStyle(fb, pos->x + i, pos->y, node->style);
-			FB_InsertStyle(fb, pos->x + i, pos->y + node->width, STYLE_RESET);
+			FB_InsertStyle(fb, pos->x, pos->y + i, node->style);
+			if (node->style != STYLE_UNDEFINED)
+				FB_InsertStyle(fb, pos->x + node->width - 1, pos->y + i, STYLE_RESET);
 		}
 		pos->y += node->height;
 		break;
@@ -560,6 +621,7 @@ void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, Position *pos)
 		break;
 	}
 }
+
 void Utils_PrintDomTree(DOM_Node *node, int depth)
 {
 	if (node == NULL)
@@ -710,12 +772,12 @@ void Utils_PrintTokens(DOM_Token *token)
 }
 void Utils_PrintStyle(FB_FrameBuffer *fb)
 {
-	for (int i = 0; i < fb->height; i++)
-		for (int j = 0; j < fb->width; j++)
-			if (fb->format[i * fb->height + j] != 0)
+	for (int j = 0; j < fb->height; j++)
+		for (int i = 0; i < fb->width; i++)
+			if (fb->format[j][i] != STYLE_UNDEFINED)
 			{
-				STYLE style = fb->format[i * fb->height + j];
-				printf("x: %d, y: %d, style: ", j, i);
+				STYLE style = fb->format[j][i];
+				printf("x: %d, y: %d, style: ", i, j);
 				if (style & STYLE_RED)
 					printf("r");
 				if (style & STYLE_GREEN)
@@ -743,9 +805,10 @@ int main(int argc, char *argv[])
 		freopen(argv[1], "r", stdin);
 		freopen(argv[2], "w", stdout);
 	}
+	///*
 	else
-		freopen("../cases/case1.in", "r", stdin);
-	char *input;
+		freopen("../cases/case2.in", "r", stdin);
+	//*/
 	IO_File file = IO_Read();
 	FB_FrameBuffer fb = FB_Init(FB_MAX_WIDTH, FB_MAX_HEIGHT);
 	DOM_Token *tokens = DOM_Tokenizer(file);
@@ -753,10 +816,10 @@ int main(int argc, char *argv[])
 	DOM_Token *current = tokens;
 	DOM_Node *domTree = DOM_Parser(&current, NULL);
 	DOM_ApplyStyle(domTree);
-	//Utils_PrintDomTree(domTree, 0);
+	// Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
 	Render_Node(domTree, &fb, &pos); // 从根节点渲染
-	//Utils_PrintStyle(&fb);
+	Utils_PrintStyle(&fb);
 	IO_Print(&fb);
 	return 0;
 }
