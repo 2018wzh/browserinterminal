@@ -7,3 +7,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR})
 file(GLOB_RECURSE sources "src/*.c")
 add_executable(browserinterminal main.c ${sources})
+
+project(test)
+add_dependencies(browserinterminal test)
+add_executable(test test/test.cpp)

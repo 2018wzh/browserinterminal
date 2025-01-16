@@ -37,7 +37,7 @@ void IO_Print(FB_FrameBuffer *fb)
         for (int j = 0; j < fb->width; j++)
         {
             int index = i * fb->width + j;
-            //FB_DrawStyle(fb->format[index]);
+            FB_DrawStyle(fb->format[index]);
             printf("%c", fb->data[index]);
         }
         printf("\n");

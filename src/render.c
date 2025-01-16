@@ -2,7 +2,7 @@
 #include "dom.h"
 #include "buffer.h"
 #include <stddef.h>
-void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, int x, int y)
+void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, Position *pos)
 {
     if (node == NULL)
         return;
@@ -14,37 +14,41 @@ void Render_Node(DOM_Node *node, FB_FrameBuffer *fb, int x, int y)
         child = node->children;
         while (child != NULL)
         {
-            Render_Node(child, fb, x, y);
+            Render_Node(child, fb, pos);
             child = child->next;
         }
         break;
     case TEXT:
         for (int i = 0; i < node->height; i++)
             for (int j = 0; j < node->width; j++)
-                FB_InsertChar(fb, x + j, y + i, node->value[i * node->width + j]);
+                FB_InsertChar(fb, pos->x + j, pos->y + i, node->value[i * node->width + j]);
         for (int i = 0; i < node->height; i++)
         {
-            FB_InsertStyle(fb, x + i, y, node->style);
-            FB_InsertStyle(fb, x + i, y + node->width - 1, STYLE_RESET);
+            FB_InsertStyle(fb, pos->x + i, pos->y, node->style);
+            FB_InsertStyle(fb, pos->x + i, pos->y + node->width - 1, STYLE_RESET);
         }
+        pos->y += node->height;
         break;
     case IMAGE:
-        Render_Node(node->children, fb, x, y);
+        Render_Node(node->children, fb, pos);
         break;
     case DIVISION:
         child = node->children;
         while (child != NULL)
         {
-            Render_Node(child, fb, x, y);
+            Render_Node(child, fb, pos);
             if (node->direction == ROW)
-                x += child->width;
+                pos->x += child->width + 1;
             else
-                y += child->height;
+                pos->y += child->height + 1;
             child = child->next;
         }
         break;
     case PARAGRAPH:
-        Render_Node(node->children, fb, x, y);
+        Render_Node(node->children, fb, pos);
+        break;
+    case HEADING:
+        Render_Node(node->children, fb, pos);
         break;
     default:
         break;

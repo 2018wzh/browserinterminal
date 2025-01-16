@@ -196,13 +196,13 @@ void DOM_ApplyStyle(DOM_Node *node)
         strncpy(style_copy, node->value, DOM_STYLE_MAX_LENGTH - 1);
         style_copy[DOM_STYLE_MAX_LENGTH - 1] = '\0';
 
-        char *token = strtok(style_copy, " ");
-        while (token != NULL)
+        char *style_token = strtok(style_copy, " ");
+        while (style_token != NULL)
         {
-            if (strstr(token, "="))
+            if (strstr(style_token, "="))
             {
                 char key[DOM_STYLE_MAX_LENGTH], value[DOM_STYLE_MAX_LENGTH];
-                sscanf(token, "%[^=]=\"%[^\"]\"", key, value);
+                sscanf(style_token, "%[^=]=\"%[^\"]\"", key, value);
 
                 if (strcmp(key, "color") == 0)
                 {
@@ -213,9 +213,9 @@ void DOM_ApplyStyle(DOM_Node *node)
                     else if (strcmp(value, "blue") == 0)
                         node->style |= STYLE_BLUE;
                 }
-                else if (strcmp(key, "w") == 0)
+                else if (strcmp(key, "w") == 0 || strcmp(key, "width") == 0)
                     node->width = atoi(value);
-                else if (strcmp(key, "h") == 0)
+                else if (strcmp(key, "h") == 0 || strcmp(key, "height") == 0)
                     node->height = atoi(value);
                 else if (strcmp(key, "align-items") == 0)
                 {
@@ -243,22 +243,25 @@ void DOM_ApplyStyle(DOM_Node *node)
                         node->children->type = TEXT;
                         node->children->value = (char *)malloc(strlen(value) + 1);
                         strcpy(node->children->value, value);
-                        node->height = strlen(value) / node->width;
+                        node->children->children = NULL;
+                        node->children->next = NULL;
+                        node->children->height = 1;
+                        node->children->width = strlen(value);
                     }
                 }
             }
             else
             {
-                if (strcmp(token, "em") == 0)
+                if (strcmp(style_token, "em") == 0)
                     node->style |= STYLE_EMPHASIS;
-                else if (strcmp(token, "b") == 0)
+                else if (strcmp(style_token, "b") == 0)
                     node->style |= STYLE_BOLD;
-                else if (strcmp(token, "i") == 0)
+                else if (strcmp(style_token, "i") == 0)
                     node->style |= STYLE_ITALIC;
-                else if (strcmp(token, "u") == 0)
+                else if (strcmp(style_token, "u") == 0)
                     node->style |= STYLE_UNDERLINE;
             }
-            token = strtok(NULL, " ");
+            style_token = strtok(NULL, " ");
         }
     }
     // 递归遍历子节点并应用样式
@@ -269,74 +272,67 @@ void DOM_ApplyStyle(DOM_Node *node)
         child = child->next;
     }
     child = NULL;
-    if (node->type != ROOT)
+    // 处理继承属性，改为使用 switch-case
+    switch (node->type)
     {
-        // 处理继承属性，改为使用 switch-case
-        switch (node->type)
+    case ROOT:
+        break;
+    case TEXT:
+        node->width = strlen(node->value);
+        node->height = 1;
+        if (node->parent != NULL)
+            node->style = node->parent->style;
+        break;
+    case DIVISION:
+        child = node->children;
+        if (child == NULL)
+            return;
+        if (node->direction == ROW)
         {
-        case TEXT:
-            if (node->parent && node->parent->type == IMAGE)
+            int total_width = 0;
+            int max_height = 0;
+            while (child != NULL)
             {
-                node->width = node->parent->width;
-                node->height = node->parent->height;
+                total_width += child->width;
+                if (child->height > max_height)
+                    max_height = child->height;
+                child = child->next;
             }
-            else
-            {
-                node->width = strlen(node->value);
-                node->height = 1;
-            }
-            break;
-        case DIVISION:
-            child = node->children;
-            if (child == NULL)
-                return;
-            if (node->direction == ROW)
-            {
-                int total_width = 0;
-                int max_height = 0;
-                while (child != NULL)
-                {
-                    total_width += child->width;
-                    if (child->height > max_height)
-                        max_height = child->height;
-                    child = child->next;
-                }
-                node->width = (node->width > 0) ? node->width : total_width;
-                node->height = (node->height > 0) ? node->height : max_height;
-            }
-            else if (node->direction == COLUMN)
-            {
-                int total_height = 0;
-                int max_width = 0;
-                while (child != NULL)
-                {
-                    total_height += child->height;
-                    if (child->width > max_width)
-                        max_width = child->width;
-                    child = child->next;
-                }
-                node->width = (node->width > 0) ? node->width : max_width;
-                node->height = (node->height > 0) ? node->height : total_height;
-            }
-            break;
-        case HEADING:
-            child = node->children;
-            for (int i = 0; i < strlen(child->value); i++)
-                if (child->value[i] >= 'a' && child->value[i] <= 'z')
-                    child->value[i] -= 32;
-            node->width = child->width;
-            node->height = child->height;
-            break;
-        case PARAGRAPH:
-            child = node->children;
-            node->width = child->width;
-            node->height = child->height;
-            break;
-        case IMAGE:
-            child = node->children;
-            child->width = node->width;
-            child->height = node->height;
-            break;
+            node->width = (node->width > 0) ? node->width : total_width;
+            node->height = (node->height > 0) ? node->height : max_height;
         }
+        else if (node->direction == COLUMN)
+        {
+            int total_height = 0;
+            int max_width = 0;
+            while (child != NULL)
+            {
+                total_height += child->height;
+                if (child->width > max_width)
+                    max_width = child->width;
+                child = child->next;
+            }
+            node->width = (node->width > 0) ? node->width : max_width;
+            node->height = (node->height > 0) ? node->height : total_height;
+        }
+        break;
+    case HEADING:
+        child = node->children;
+        for (int i = 0; i < strlen(child->value); i++)
+            if (child->value[i] >= 'a' && child->value[i] <= 'z')
+                child->value[i] -= 32;
+        node->width = child->width;
+        node->height = child->height;
+        break;
+    case PARAGRAPH:
+        child = node->children;
+        node->width = child->width;
+        node->height = child->height;
+        break;
+    case IMAGE:
+        child = node->children;
+        child->height = strlen(child->value) / node->width;
+        child->width = node->width;
+        break;
     }
 }

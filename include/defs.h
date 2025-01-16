@@ -1,7 +1,7 @@
 #pragma once
 // framebuffer
-#define FB_MAX_WIDTH 10
-#define FB_MAX_HEIGHT 50
+#define FB_MAX_WIDTH 50
+#define FB_MAX_HEIGHT 10
 #define FB_MAX_SIZE (FB_MAX_WIDTH * FB_MAX_HEIGHT)
 // io
 #define IO_MAX_FILENAME 256
@@ -17,4 +17,4 @@
 #define STYLE_RESET 0b10000000
 // DOM
 #define DOM_MAX_STRING_LENGTH 500
-#define DOM_STYLE_MAX_LENGTH 50
+#define DOM_STYLE_MAX_LENGTH 500
