@@ -107,7 +107,7 @@ void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
 
-	freopen("../tests/test1.in", "r", stdin);
+	//freopen("../tests/test1.in", "r", stdin);
 
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
@@ -116,11 +116,12 @@ int main(int argc, char *argv[])
 	DOM_Node *domTree = DOM_Parser(&current, NULL);
 	DOM_ApplyStyle(domTree);
 	DOM_InheritStyle(domTree);
-	Utils_PrintDomTree(domTree, 0);
+	// Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
-	IO_Print_Debug(&fb);
+	//   IO_Print_Debug(&fb);
+	IO_Print(&fb);
 	return 0;
 }
 
@@ -172,7 +173,7 @@ void FB_InsertChar(FB_FrameBuffer *fb, int x, int y, char c)
 void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style)
 {
 	if (y < fb->height && x < fb->width)
-		fb->format[y][x] = style;
+		fb->format[y][x] |= style;
 }
 void FB_DrawStyle(STYLE style)
 {
@@ -215,16 +216,16 @@ DOM_Token *DOM_Tokenizer(IO_File file)
 			{
 				buffer[buf_idx] = '\0';
 				// 检查 buffer 是否全为空格
-				int is_all_spaces = 1;
+				int empty = 1;
 				for (int j = 0; buffer[j] != '\0'; j++)
 				{
 					if (buffer[j] != ' ')
 					{
-						is_all_spaces = 0;
+						empty = 0;
 						break;
 					}
 				}
-				if (!is_all_spaces)
+				if (!empty)
 				{
 					// 创建文本 token
 					DOM_Token *text_token = (DOM_Token *)malloc(sizeof(DOM_Token));
@@ -618,6 +619,7 @@ void IO_Print_Debug(FB_FrameBuffer *fb)
 	printf("  ");
 	for (int i = 0; i <= fb->width; i++)
 		printf("-");
+	printf("\n");
 }
 FB_FrameBuffer Render_Node(DOM_Node *node)
 {
@@ -648,7 +650,6 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 		{
 			FB_FrameBuffer child_fb = Render_Node(child);
 			int dx = 0, dy = 0;
-			// FB_Copy(&child_fb, &fb, x, y);
 			if (node->direction == ROW)
 			{
 				if (node->justify_content == END)
@@ -660,7 +661,7 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 				else if (node->align_items == CENTER)
 					dy = (node->height - node->data_height) / 2;
 				else if (node->align_items == SPACE_EVENLY)
-					y += ((node->height - node->data_height) / (node->childcount + 1));
+					y += (node->height - node->data_height) / (node->childcount + 1);
 				FB_Copy(&child_fb, &fb, x + dx, y + dy);
 				y += child->height;
 			}
@@ -675,7 +676,7 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 				else if (node->justify_content == CENTER)
 					dx = (node->width - node->data_width) / 2;
 				else if (node->justify_content == SPACE_EVENLY)
-					x += ((node->width - node->data_width) / (node->childcount + 1));
+					x += (node->width - node->data_width) / (node->childcount + 1);
 				FB_Copy(&child_fb, &fb, x + dx, y + dy);
 				x += child->width;
 			}
