@@ -1,19 +1,6 @@
-<div
-    w="50"
-    h="5"
-    justify-content="start"
-    align-items="space-evenly"
-    direction="row"
-    color="red"
-    >
+<div w="50" h="5" justify-content="start" align-items="space-evenly" direction="row" color="red">
     <p>Deep dark fantasy</p>
 </div>
-<div 
-    w="50"
-    h="5" 
-    justify-content="space-evenly" 
-    align-items="start" 
-    direction="column"
-    >
+<div w="50" h="5" justify-content="space-evenly" align-items="start" direction="column">
     <img src="DOYOULIKEWHATYOUSEE?" width="5"></img>
 </div>

@@ -128,7 +128,8 @@ FB_FrameBuffer FB_Init(int width, int height)
 	FB_FrameBuffer fb;
 	fb.width = width;
 	fb.height = height;
-
+	if (fb.width == 0 || fb.height == 0)
+		return fb;
 	// 分配行指针
 	fb.data = (char **)malloc(height * sizeof(char *));
 	fb.format = (STYLE **)malloc(height * sizeof(STYLE *));
@@ -143,6 +144,8 @@ FB_FrameBuffer FB_Init(int width, int height)
 }
 void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 {
+	if (src->width == 0 || src->height == 0)
+		return;
 	if (src->width + x > dst->width || src->height + y > dst->height)
 	{
 		printf("Error: Copy out of bounds\n");
@@ -596,6 +599,8 @@ void IO_Print(FB_FrameBuffer *fb)
 FB_FrameBuffer Render_Node(DOM_Node *node)
 {
 	FB_FrameBuffer fb = FB_Init(node->width, node->height);
+	if (node->width == 0 || node->height == 0)
+		return fb;
 	DOM_Node *child;
 	int x = 0, y = 0; // 初始化位置
 	switch (node->type)

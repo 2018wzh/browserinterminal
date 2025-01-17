@@ -27,13 +27,13 @@
         <h u>Homework</h>
         <div w="15" h="3">
             <p em>2024-9-pointers</p>
-            <p color="green">    Enter</p>
-            <p i>  2024-12-07</p>
+            <p color="green"> Enter</p>
+            <p i> 2024-12-07</p>
         </div>
         <div w="15" h="3">
             <p em> 2024-10-LList </p>
-            <p color="green">    Enter</p>
-            <p i>  2024-12-20</p>
+            <p color="green"> Enter</p>
+            <p i> 2024-12-20</p>
         </div>
     </div>
 </div>

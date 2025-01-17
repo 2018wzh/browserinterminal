@@ -1,5 +1,8 @@
 <style>
-    p { em;color:green; }
+    p {
+        em;
+        color: green;
+    }
 </style>
 <p>GREEN AND EM</p>
 <p color="blue">BLUE AND EM</p>
