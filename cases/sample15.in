@@ -1,0 +1,5 @@
+<style>
+    .my-attribute { color:blue;em; }
+</style>
+<p my-attribute>BLUE and EM</p>
+<h my-attribute>blue and em</h>

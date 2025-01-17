@@ -1,0 +1,12 @@
+<style>
+    p { color:red;u; }
+    .text-attribute { em;i; }
+    .div-attribute { justify-content:center; }
+</style>
+<div div-attribute w="50" h="10">
+    <p text-attribute>RED and U and EM and I</p>
+    <h text-attribute>U and EM</h>
+    <h color="green" text-attribute>GREEN and I and EM</h>
+</div>
+
+
