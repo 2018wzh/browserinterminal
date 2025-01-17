@@ -94,7 +94,7 @@ void FB_InsertStyle(FB_FrameBuffer *fb, int x, int y, STYLE style);
 void FB_DrawStyle(STYLE style);
 void FB_DrawStyleReset(STYLE s);
 DOM_Token *DOM_Tokenizer(IO_File file);
-DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent);
+DOM_Node *DOM_Parse(DOM_Token **current, DOM_Node *parent);
 void DOM_ApplyStyle(DOM_Node *node);
 void DOM_InheritStyle(DOM_Node *node);
 IO_File IO_Read();
@@ -107,20 +107,20 @@ void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
 
-	// freopen("../tests/test1.in", "r", stdin);
+	//freopen("../tests/test1.in", "r", stdin);
 
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
 	// Utils_PrintTokens(tokens);
 	DOM_Token *current = tokens;
-	DOM_Node *domTree = DOM_Parser(&current, NULL);
+	DOM_Node *domTree = DOM_Parse(&current, NULL);
 	DOM_ApplyStyle(domTree);
 	DOM_InheritStyle(domTree);
 	// Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
-	IO_Print_Debug(&fb);
+	// IO_Print_Debug(&fb);
 	IO_Print(&fb);
 	return 0;
 }
@@ -290,7 +290,7 @@ char *strdup(const char *s)
 		strcpy(d, s);
 	return d;
 }
-DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
+DOM_Node *DOM_Parse(DOM_Token **current, DOM_Node *parent)
 {
 	if (*current == NULL)
 		return NULL;
@@ -308,7 +308,7 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		root->next = NULL;
 		root->value = (char *)malloc(5 * sizeof(char));
 		strcpy(root->value, "root");
-		root->children = DOM_Parser(current, root);
+		root->children = DOM_Parse(current, root);
 		return root;
 	}
 
@@ -347,7 +347,7 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 		*current = (*current)->next;
 
 		// 递归解析子节点
-		node->children = DOM_Parser(current, node);
+		node->children = DOM_Parse(current, node);
 	}
 	else if (token->type == TOKEN_TEXT)
 	{
@@ -372,7 +372,7 @@ DOM_Node *DOM_Parser(DOM_Token **current, DOM_Node *parent)
 	}
 	// 设置下一个兄弟节点
 	if (node)
-		node->next = DOM_Parser(current, parent);
+		node->next = DOM_Parse(current, parent);
 	return node;
 }
 void DOM_ApplyStyle(DOM_Node *node)
@@ -642,6 +642,7 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 		}
 		break;
 	case IMAGE:
+		node->children->style = STYLE_UNDEFINED;
 		fb = Render_Node(node->children);
 		break;
 	case DIVISION:
@@ -656,6 +657,7 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 					dx = node->width - child->width;
 				else if (node->justify_content == CENTER || node->justify_content == SPACE_EVENLY)
 					dx = (node->width - child->width) / 2;
+
 				if (node->align_items == END)
 					dy = node->height - node->data_height;
 				else if (node->align_items == CENTER)
