@@ -99,6 +99,7 @@ void DOM_ApplyStyle(DOM_Node *node);
 void DOM_InheritStyle(DOM_Node *node);
 IO_File IO_Read();
 void IO_Print(FB_FrameBuffer *fb);
+void IO_Print_Debug(FB_FrameBuffer *fb);
 FB_FrameBuffer Render_Node(DOM_Node *node);
 void Utils_PrintDomTree(DOM_Node *node, int depth);
 void Utils_PrintTokens(DOM_Token *token);
@@ -106,7 +107,7 @@ void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
 
-	// freopen("../cases/example4.in", "r", stdin);
+	freopen("../tests/test1.in", "r", stdin);
 
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
@@ -119,7 +120,7 @@ int main(int argc, char *argv[])
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
-	IO_Print(&fb);
+	IO_Print_Debug(&fb);
 	return 0;
 }
 
@@ -595,6 +596,28 @@ void IO_Print(FB_FrameBuffer *fb)
 		}
 		printf("\n");
 	}
+}
+
+void IO_Print_Debug(FB_FrameBuffer *fb)
+{
+	printf("  ");
+	for (int i = 0; i <= fb->width; i++)
+		printf("-");
+	printf("\n");
+	for (int j = 0; j < fb->height; j++)
+	{
+		printf("%d |", j);
+		for (int i = 0; i < fb->width; i++)
+		{
+			FB_DrawStyle(fb->format[j][i]);
+			printf("%c", fb->data[j][i]);
+			FB_DrawStyleReset(fb->format[j][i]);
+		}
+		printf("|\n");
+	}
+	printf("  ");
+	for (int i = 0; i <= fb->width; i++)
+		printf("-");
 }
 FB_FrameBuffer Render_Node(DOM_Node *node)
 {
