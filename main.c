@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
-	//   IO_Print_Debug(&fb);
+	IO_Print_Debug(&fb);
 	IO_Print(&fb);
 	return 0;
 }
@@ -150,12 +150,12 @@ void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 		return;
 	if (src->width + x > dst->width || src->height + y > dst->height)
 	{
-		printf("Error: Copy out of bounds\n");
-		printf("src:%dx%d\n", src->width, src->height);
-		IO_Print(src);
-		printf("at:(%d,%d)\n", x, y);
-		printf("dst:%dx%d\n", dst->width, dst->height);
-		IO_Print(dst);
+		fprintf(stderr, "Error: Copy out of bounds\n");
+		fprintf(stderr, "src:%dx%d\n", src->width, src->height);
+		IO_Print_Debug(src);
+		fprintf(stderr, "at:(%d,%d)\n", x, y);
+		fprintf(stderr, "dst:%dx%d\n", dst->width, dst->height);
+		IO_Print_Debug(dst);
 		return;
 	}
 	for (int j = 0; j < src->height; j++)
@@ -601,25 +601,25 @@ void IO_Print(FB_FrameBuffer *fb)
 
 void IO_Print_Debug(FB_FrameBuffer *fb)
 {
-	printf("  ");
+	fprintf(stderr, "  ");
 	for (int i = 0; i <= fb->width; i++)
-		printf("-");
-	printf("\n");
+		fprintf(stderr, "-");
+	fprintf(stderr, "\n");
 	for (int j = 0; j < fb->height; j++)
 	{
-		printf("%d |", j);
+		fprintf(stderr, "%d |", j);
 		for (int i = 0; i < fb->width; i++)
 		{
 			FB_DrawStyle(fb->format[j][i]);
-			printf("%c", fb->data[j][i]);
+			fprintf(stderr, "%c", fb->data[j][i]);
 			FB_DrawStyleReset(fb->format[j][i]);
 		}
-		printf("|\n");
+		fprintf(stderr, "|\n");
 	}
-	printf("  ");
+	fprintf(stderr, "  ");
 	for (int i = 0; i <= fb->width; i++)
-		printf("-");
-	printf("\n");
+		fprintf(stderr, "-");
+	fprintf(stderr, "\n");
 }
 FB_FrameBuffer Render_Node(DOM_Node *node)
 {
@@ -671,6 +671,7 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 					dy = node->height - child->height;
 				else if (node->align_items == CENTER || node->align_items == SPACE_EVENLY)
 					dy = (node->height - child->height) / 2;
+
 				if (node->justify_content == END)
 					dx = node->width - node->data_width;
 				else if (node->justify_content == CENTER)
@@ -696,133 +697,134 @@ FB_FrameBuffer Render_Node(DOM_Node *node)
 }
 void Utils_PrintDomTree(DOM_Node *node, int depth)
 {
+	;
 	if (node == NULL)
 		return;
 	for (int i = 0; i < depth; i++)
-		printf(" ");
+		fprintf(stderr, " ");
 	switch (node->type)
 	{
 	case TEXT:
-		printf("%dx%d:[", node->width, node->height);
+		fprintf(stderr, "%dx%d:[", node->width, node->height);
 		// 输出 color 属性
 		if (node->style & STYLE_RED)
-			printf("color=\"red\"");
+			fprintf(stderr, "color=\"red\"");
 		else if (node->style & STYLE_GREEN)
-			printf("color=\"green\"");
+			fprintf(stderr, "color=\"green\"");
 		else if (node->style & STYLE_BLUE)
-			printf("color=\"blue\"");
+			fprintf(stderr, "color=\"blue\"");
 		// 输出其他无值属性
 		if (node->style & STYLE_EMPHASIS)
-			printf(" em");
+			fprintf(stderr, " em");
 		if (node->style & STYLE_ITALIC)
-			printf(" i");
+			fprintf(stderr, " i");
 		if (node->style & STYLE_UNDERLINE)
-			printf(" u");
-		printf("]%s", node->value);
+			fprintf(stderr, " u");
+		fprintf(stderr, "]%s", node->value);
 		break;
 	case HEADING:
-		printf("<h");
+		fprintf(stderr, "<h");
 		// 输出 w 属性
-		printf(" w=\"%d\"", node->width);
-		printf(" h=\"%d\"", node->height);
+		fprintf(stderr, " w=\"%d\"", node->width);
+		fprintf(stderr, " h=\"%d\"", node->height);
 		// 输出 color 属性
 		if (node->style & STYLE_RED)
-			printf(" color=\"red\"");
+			fprintf(stderr, " color=\"red\"");
 		else if (node->style & STYLE_GREEN)
-			printf(" color=\"green\"");
+			fprintf(stderr, " color=\"green\"");
 		else if (node->style & STYLE_BLUE)
-			printf(" color=\"blue\"");
+			fprintf(stderr, " color=\"blue\"");
 		// 输出其他无值属性
 		if (node->style & STYLE_EMPHASIS)
-			printf(" em");
+			fprintf(stderr, " em");
 		if (node->style & STYLE_ITALIC)
-			printf(" i");
+			fprintf(stderr, " i");
 		if (node->style & STYLE_UNDERLINE)
-			printf(" u");
-		printf("> ");
+			fprintf(stderr, " u");
+		fprintf(stderr, "> ");
 		break;
 	case PARAGRAPH:
-		printf("<p");
+		fprintf(stderr, "<p");
 		// 输出 w 属性
-		printf(" w=\"%d\"", node->width);
+		fprintf(stderr, " w=\"%d\"", node->width);
 		// 输出 h 属性
-		printf(" h=\"%d\"", node->height);
+		fprintf(stderr, " h=\"%d\"", node->height);
 		// 输出 color 属性
 		if (node->style & STYLE_RED)
-			printf(" color=\"red\"");
+			fprintf(stderr, " color=\"red\"");
 		else if (node->style & STYLE_GREEN)
-			printf(" color=\"green\"");
+			fprintf(stderr, " color=\"green\"");
 		else if (node->style & STYLE_BLUE)
-			printf(" color=\"blue\"");
+			fprintf(stderr, " color=\"blue\"");
 		// 输出其他无值属性
 		if (node->style & STYLE_EMPHASIS)
-			printf(" em");
+			fprintf(stderr, " em");
 		if (node->style & STYLE_ITALIC)
-			printf(" i");
+			fprintf(stderr, " i");
 		if (node->style & STYLE_UNDERLINE)
-			printf(" u");
-		printf("> ");
+			fprintf(stderr, " u");
+		fprintf(stderr, "> ");
 		break;
 	case DIVISION:
-		printf("<div");
+		fprintf(stderr, "<div");
 		// 输出 w 属性
-		printf(" w=\"%d\"", node->width);
+		fprintf(stderr, " w=\"%d\"", node->width);
 		// 输出 h 属性
-		printf(" h=\"%d\"", node->height);
+		fprintf(stderr, " h=\"%d\"", node->height);
 		// 输出 data-w 属性
-		printf(" data-w=\"%d\"", node->data_width);
+		fprintf(stderr, " data-w=\"%d\"", node->data_width);
 		// 输出 data-h 属性
-		printf(" data-h=\"%d\"", node->data_height);
+		fprintf(stderr, " data-h=\"%d\"", node->data_height);
 		// 输出 direction 属性
 		if (node->direction == ROW)
-			printf(" direction=\"row\"");
+			fprintf(stderr, " direction=\"row\"");
 		else if (node->direction == COLUMN)
-			printf(" direction=\"column\"");
+			fprintf(stderr, " direction=\"column\"");
 		// 输出 align-items 属性
 		if (node->align_items == START)
-			printf(" align-items=\"start\"");
+			fprintf(stderr, " align-items=\"start\"");
 		else if (node->align_items == CENTER)
-			printf(" align-items=\"center\"");
+			fprintf(stderr, " align-items=\"center\"");
 		else if (node->align_items == END)
-			printf(" align-items=\"end\"");
+			fprintf(stderr, " align-items=\"end\"");
 		else if (node->align_items == SPACE_EVENLY)
-			printf(" align-items=\"space-evenly\"");
+			fprintf(stderr, " align-items=\"space-evenly\"");
 		// 输出 justify-content 属性
 		if (node->justify_content == START)
-			printf(" justify-content=\"start\"");
+			fprintf(stderr, " justify-content=\"start\"");
 		else if (node->justify_content == CENTER)
-			printf(" justify-content=\"center\"");
+			fprintf(stderr, " justify-content=\"center\"");
 		else if (node->justify_content == END)
-			printf(" justify-content=\"end\"");
+			fprintf(stderr, " justify-content=\"end\"");
 		else if (node->justify_content == SPACE_EVENLY)
-			printf(" justify-content=\"space-evenly\"");
+			fprintf(stderr, " justify-content=\"space-evenly\"");
 		// 输出继承的属性
 		if (node->style & STYLE_RED && !(node->style & STYLE_GREEN) && !(node->style & STYLE_BLUE))
-			printf(" color=\"red\"");
+			fprintf(stderr, " color=\"red\"");
 		else if (node->style & STYLE_GREEN && !(node->style & STYLE_RED) && !(node->style & STYLE_BLUE))
-			printf(" color=\"green\"");
+			fprintf(stderr, " color=\"green\"");
 		else if (node->style & STYLE_BLUE && !(node->style & STYLE_RED) && !(node->style & STYLE_GREEN))
-			printf(" color=\"blue\"");
+			fprintf(stderr, " color=\"blue\"");
 		if (node->style & STYLE_EMPHASIS)
-			printf(" em");
+			fprintf(stderr, " em");
 		if (node->style & STYLE_ITALIC)
-			printf(" i");
+			fprintf(stderr, " i");
 		if (node->style & STYLE_UNDERLINE)
-			printf(" u");
-		printf("> ");
-		printf("childs: %d", node->childcount);
+			fprintf(stderr, " u");
+		fprintf(stderr, "> ");
+		fprintf(stderr, "childs: %d", node->childcount);
 		break;
 	case IMAGE:
-		printf("<img");
+		fprintf(stderr, "<img");
 		// 输出 src 属性
 		if (node->children != NULL && node->children->type == TEXT)
-			printf(" src=\"%s\"", node->children->value);
-		printf(" width=\"%d\"", node->width);
-		printf(" height=\"%d\"", node->height);
-		printf(">");
+			fprintf(stderr, " src=\"%s\"", node->children->value);
+		fprintf(stderr, " width=\"%d\"", node->width);
+		fprintf(stderr, " height=\"%d\"", node->height);
+		fprintf(stderr, ">");
 		break;
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 	Utils_PrintDomTree(node->children, depth + 1);
 	Utils_PrintDomTree(node->next, depth);
 }
@@ -833,40 +835,41 @@ void Utils_PrintTokens(DOM_Token *token)
 	switch (token->type)
 	{
 	case TOKEN_TEXT:
-		printf("%s", token->value);
+		fprintf(stderr, "%s", token->value);
 		break;
 	case TAG_CLOSE:
-		printf("</>");
+		fprintf(stderr, "</>");
 		break;
 	case TAG_OPEN:
-		printf("<%s>", token->value);
+		fprintf(stderr, "<%s>", token->value);
 		break;
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 	Utils_PrintTokens(token->next);
 }
 void Utils_PrintStyle(FB_FrameBuffer *fb)
 {
+	fprintf(stderr, "===STYLE===\n");
 	for (int j = 0; j < fb->height; j++)
 		for (int i = 0; i < fb->width; i++)
 			if (fb->format[j][i] != STYLE_UNDEFINED)
 			{
 				STYLE style = fb->format[j][i];
-				printf("x: %d, y: %d, style: ", i, j);
+				fprintf(stderr, "x: %d, y: %d, style: ", i, j);
 				if (style & STYLE_RED)
-					printf("r");
+					fprintf(stderr, "r");
 				if (style & STYLE_GREEN)
-					printf("g");
+					fprintf(stderr, "g");
 				if (style & STYLE_BLUE)
-					printf("b");
+					fprintf(stderr, "b");
 				if (style & STYLE_EMPHASIS)
-					printf("EM");
+					fprintf(stderr, "EM");
 				if (style & STYLE_ITALIC)
-					printf("I");
+					fprintf(stderr, "I");
 				if (style & STYLE_UNDERLINE)
-					printf("U");
+					fprintf(stderr, "U");
 				if (style & STYLE_RESET)
-					printf("R");
-				printf("\n");
+					fprintf(stderr, "R");
+				fprintf(stderr, "\n");
 			}
 }

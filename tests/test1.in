@@ -1,6 +1,8 @@
-<div w="50" h="5" direction="column" justify-content="end" align-items="center" i>
+<div w="50" h="5" direction="column" justify-content="space-evenly" align-items="end">
     <h>a</h>
-    <div w="6" h="3" direction="column" justify-content="end" align-items="end">
+    <div w="20" h="2" direction="column" justify-content="space-evenly" align-items="center">
         <p>aaa</p>
+        <h>aaa</h>
     </div>
+    <h>b</h>
 </div>
