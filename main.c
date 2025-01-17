@@ -415,20 +415,20 @@ void DOM_ApplyStyle(DOM_Node *node)
 				node->height = atoi(value);
 			else if (strcmp(key, "align-items") == 0)
 			{
-				if (strcmp(value, "center") == 0)
+				if (strstr(value, "center") != NULL)
 					node->align_items = CENTER;
-				else if (strcmp(value, "end") == 0)
+				else if (strstr(value, "end") != NULL)
 					node->align_items = END;
-				else if (strcmp(value, "space-evenly") == 0)
+				else if (strstr(value, "space-evenly") != NULL)
 					node->align_items = SPACE_EVENLY;
 			}
 			else if (strcmp(key, "justify-content") == 0)
 			{
-				if (strcmp(value, "center") == 0)
+				if (strstr(value, "center") != NULL)
 					node->justify_content = CENTER;
-				else if (strcmp(value, "end") == 0)
+				else if (strstr(value, "end") != NULL)
 					node->justify_content = END;
-				else if (strcmp(value, "space-evenly") == 0)
+				else if (strstr(value, "space-evenly") != NULL)
 					node->justify_content = SPACE_EVENLY;
 			}
 			else if (strcmp(key, "direction") == 0)
