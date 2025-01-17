@@ -107,7 +107,7 @@ void Utils_PrintStyle(FB_FrameBuffer *fb);
 int main(int argc, char *argv[])
 {
 
-	//freopen("../tests/test1.in", "r", stdin);
+	// freopen("../tests/test1.in", "r", stdin);
 
 	IO_File file = IO_Read();
 	DOM_Token *tokens = DOM_Tokenizer(file);
@@ -148,7 +148,8 @@ void FB_Copy(FB_FrameBuffer *src, FB_FrameBuffer *dst, int x, int y)
 {
 	if (src->width == 0 || src->height == 0)
 		return;
-	if (src->width + x > dst->width || src->height + y > dst->height)
+	if (src->width + x > dst->width || src->height + y > dst->height || x < 0 || y < 0)
+	)
 	{
 		fprintf(stderr, "Error: Copy out of bounds\n");
 		fprintf(stderr, "src:%dx%d\n", src->width, src->height);
