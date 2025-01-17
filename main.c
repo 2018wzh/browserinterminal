@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	DOM_Node *domTree = DOM_Parser(&current, NULL);
 	DOM_ApplyStyle(domTree);
 	DOM_InheritStyle(domTree);
-	// Utils_PrintDomTree(domTree, 0);
+	Utils_PrintDomTree(domTree, 0);
 	Position pos = {0, 0};
 	FB_FrameBuffer fb = Render_Node(domTree);
 	// Utils_PrintStyle(&fb);
@@ -500,16 +500,16 @@ void DOM_ApplyStyle(DOM_Node *node)
 		if (node->direction == COLUMN)
 		{
 
-			if (node->width == 0)
+			if (node->width <= total_width)
 				node->width = total_width;
-			if (node->height == 0)
+			if (node->height <= max_height)
 				node->height = max_height;
 		}
 		else if (node->direction == ROW)
 		{
-			if (node->width == 0)
+			if (node->width <= max_width)
 				node->width = max_width;
-			if (node->height == 0)
+			if (node->height <= total_height)
 				node->height = total_height;
 		}
 		break;
