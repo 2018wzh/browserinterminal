@@ -707,7 +707,7 @@ void render(Element *element, int row, int col);
 - phimgTest (4 cases, 20 pts)：只包含 `p`, `h` 和 `img` 元素
 - divTest (4 cases, 20 pts)：包含除了 `style` 之外的全部元素。保证 `div` 元素只含 `w` 和 `h` 属性
 - layoutTest (4 cases, 20 pts)：包含除了 `style` 之外的全部元素。`div` 元素会包含布局属性
-- styleTest (4 cases, 10 pts)：只包含 `p`，`h` 和 `style` 元素
+- styleTest (4 cases, 20 pts)：只包含 `p`，`h` 和 `style` 元素
 - hardTest (2 cases, 10 pts)：包含全部元素与属性
 
 ## 输入格式
